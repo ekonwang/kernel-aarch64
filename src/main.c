@@ -5,5 +5,5 @@ NORETURN void main() {
     init_char_device();
     init_console();
 	/* TODO: Lab1 print */
-
+    printf("Hello world!\n");
 }
