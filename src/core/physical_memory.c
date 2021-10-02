@@ -21,7 +21,10 @@ static void freelist_free(void *datastructure_ptr, void *page_address);
 static void *freelist_alloc(void *datastructure_ptr) {
     FreeListNode *f = (FreeListNode *) datastructure_ptr; 
     /* TODO: Lab2 memory*/
-
+    if (f != NULL) {
+        pmem.struct_ptr = f -> next;
+    }
+    return f;
 }
 
 /*
@@ -31,6 +34,9 @@ static void freelist_free(void *datastructure_ptr, void *page_address) {
     FreeListNode* f = (FreeListNode*) datastructure_ptr; 
     /* TODO: Lab2 memory*/
 
+    FreeListNode* p = page_address;
+    p -> next = datastructure_ptr;
+    pmem.struct_ptr = p;
 }
 
 /*
@@ -40,7 +46,12 @@ static void freelist_free(void *datastructure_ptr, void *page_address) {
 static void freelist_init(void *datastructure_ptr, void *start, void *end) {
     FreeListNode* f = (FreeListNode*) datastructure_ptr; 
     /* TODO: Lab2 memory*/
-
+    
+    // start, end all virtual address.
+    pmem.struct_ptr = NULL;
+    for(char* p = start; p <= end; p += PAGE_SIZE) {
+        freelist_free(pmem.struct_ptr, p);
+    }
 }
 
 
