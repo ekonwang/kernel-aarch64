@@ -37,9 +37,12 @@ void uvm_switch(PTEntriesPtr pgdir) {
  * generate a empty page as page directory
  */
 
-static PTEntriesPtr my_pgdir_init() {
+static PTEntriesPtr 
+my_pgdir_init() {
     /* TODO: Lab2 memory*/
-
+    PTEntriesPtr pgdir = kalloc();
+    memset(pgdir, 0, PAGE_SIZE);
+    return pgdir;
 }
 
 
@@ -49,17 +52,52 @@ static PTEntriesPtr my_pgdir_init() {
  * if alloc != 0, create any required page table pages.
  */
 
-static PTEntriesPtr my_pgdir_walk(PTEntriesPtr pgdir, void *vak, int alloc) {
+static PTEntriesPtr 
+my_pgdir_walk(PTEntriesPtr pgdir, void *vak, int alloc) {
     /* TODO: Lab2 memory*/
-
+    int index = 2;
+    for(; index > 0; index--) {
+        PTEntriesPtr p = &pgdir[PTX(index, (int64_t)vak)];
+        if (*p & PTE_VALID) {
+            // pte should table rather than block.
+            pgdir = (PTEntriesPtr)P2K(PTE_ADDRESS(*p));
+        } else{
+            if (!alloc || !(pgdir = kalloc())) 
+                return 0;
+            *p = K2P((int64_t)pgdir) | PTE_TABLE; 
+        }
+    }
+    return &pgdir[PTX(0, (int64_t)vak)];
 }
 
+/* A helper function for my_vm_free */
+static void 
+my_vm_free_helper(PTEntriesPtr pgdir, int64_t index) {
+    if(index > 2)
+        PANIC('my_vm_free_helper');
+    int x = 0;
+    PTEntriesPtr p, q;
+    for(; x < 512; x++) {
+        p = &pgdir[x];
+        if (*p & PTE_VALID) {
+            q = (PTEntriesPtr)P2K(PTE_ADDRESS(*p));  
+            if (index == 0)
+                kfree(q);
+            else
+                my_vm_free_helper(q, index-1);
+            }
+        }
+    }
+}
 
 /* Free a user page table and all the physical memory pages. */
 
-void my_vm_free(PTEntriesPtr pgdir) {
+void 
+my_vm_free(PTEntriesPtr pgdir) {
     /* TODO: Lab2 memory*/
-
+    if((int64_t)pgdir % PAGE_SIZE) 
+        PANIC('my_vm_free');
+    my_vm_free_helper(pgdir, 2);
 }
 
 /*
@@ -71,13 +109,26 @@ void my_vm_free(PTEntriesPtr pgdir) {
 
 int my_uvm_map(PTEntriesPtr pgdir, void *va, size_t sz, uint64_t pa) {
     /* TODO: Lab2 memory*/
-
+    char *start = (char *) ROUNDDOWN((uint64_t)va, PAGE_SIZE),
+         *end = (char *) ROUNDDOWN((uint64_t)va + sz - 1, PAGE_SIZE),
+         *p = start;
+    for(; p <= end; p += PAGE_SIZE) {
+        PTEntriesPtr pte = my_pgdir_walk(pgdir, va, 1);
+        if (pte == NULL) 
+            return -1;
+        if (*pte & PTE_VALID) {
+            PANIC('my_uvm_map : remap');
+        }
+        *pte =  PTE_ADDRESS(pa) | PTE_VALID;
+        pa += PAGE_SIZE;
+    }
+    return 0;
 }
 
 void virtual_memory_init(VMemory *vmem_ptr) {
     vmem_ptr->pgdir_init = my_pgdir_init;
     vmem_ptr->pgdir_walk = my_pgdir_walk;
-    vmem_ptr->vm_free = vm_free;
+    vmem_ptr->vm_free = my_vm_free;
     vmem_ptr->uvm_map = my_uvm_map;
 }
 
@@ -87,6 +138,6 @@ void init_virtual_memory() {
 
 void vm_test() {
     /* TODO: Lab2 memory*/
-
+    
     // Certify that your code works!
 }
