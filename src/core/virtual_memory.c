@@ -55,7 +55,7 @@ my_pgdir_init() {
 static PTEntriesPtr 
 my_pgdir_walk(PTEntriesPtr pgdir, void *vak, int alloc) {
     /* TODO: Lab2 memory*/
-    int index = 2;
+    int index = 3;
     for(; index > 0; index--) {
         PTEntriesPtr p = &pgdir[PTX(index, (int64_t)vak)];
         if (*p & PTE_VALID) {
@@ -73,8 +73,6 @@ my_pgdir_walk(PTEntriesPtr pgdir, void *vak, int alloc) {
 /* A helper function for my_vm_free */
 static void 
 my_vm_free_helper(PTEntriesPtr pgdir, int64_t index) {
-    if(index > 2)
-        PANIC('my_vm_free_helper');
     int x = 0;
     PTEntriesPtr p, q;
     for(; x < 512; x++) {
@@ -85,19 +83,17 @@ my_vm_free_helper(PTEntriesPtr pgdir, int64_t index) {
                 kfree(q);
             else
                 my_vm_free_helper(q, index-1);
-            }
         }
     }
 }
+
 
 /* Free a user page table and all the physical memory pages. */
 
 void 
 my_vm_free(PTEntriesPtr pgdir) {
     /* TODO: Lab2 memory*/
-    if((int64_t)pgdir % PAGE_SIZE) 
-        PANIC('my_vm_free');
-    my_vm_free_helper(pgdir, 2);
+    my_vm_free_helper(pgdir, 3);
 }
 
 /*
@@ -116,9 +112,6 @@ int my_uvm_map(PTEntriesPtr pgdir, void *va, size_t sz, uint64_t pa) {
         PTEntriesPtr pte = my_pgdir_walk(pgdir, va, 1);
         if (pte == NULL) 
             return -1;
-        if (*pte & PTE_VALID) {
-            PANIC('my_uvm_map : remap');
-        }
         *pte =  PTE_ADDRESS(pa) | PTE_VALID;
         pa += PAGE_SIZE;
     }
@@ -136,8 +129,39 @@ void init_virtual_memory() {
     virtual_memory_init(&vmem);
 }
 
+void test1_pm_kfree_kalloc() {
+    // basic test of physical memory API.
+    const int test1_len = 10;
+    PTEntriesPtr contain[test1_len], contain2[test1_len]; 
+    int i = 0;
+    for(; i < test1_len; i++)
+        contain[i] = kalloc();
+    for(; i > 0; i--)
+        kfree(contain[i]);
+    for(; i < test1_len; i++){
+        contain2[i] = kalloc();
+        assert(contain2[i] == contain[i]);
+    }
+    for(; i > 0; i--)
+        kfree(contain2[i]);
+    printf("test1_pm pass.");
+}
+
+void test2_vm_map_walk() {
+    // basic test of virtual memory API.
+    PTEntriesPtr pgdir = my_pgdir_init();
+    PTEntriesPtr v[] = {(PTEntriesPtr)P2K(0x12000)};
+    PTEntriesPtr p[] = {0x12000};
+    my_uvm_map(pgdir, v[0], 1, (int64_t)p[0]);
+    assert(p[0] == my_pgdir_walk(pgdir, v[0], 1));
+    my_vm_free(pgdir);
+    assert(my_pgdir_walk(pgdir, v[0], 1) == NULL);
+    printf('test2_vm pass.');
+}
+
 void vm_test() {
     /* TODO: Lab2 memory*/
-    
+    test1_pm_kfree_kalloc();
+    test2_vm_map_walk();
     // Certify that your code works!
 }

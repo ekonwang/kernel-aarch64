@@ -2,6 +2,7 @@
 #include <core/physical_memory.h>
 #include <common/types.h>
 #include <core/console.h>
+#include <common/string.h>
 
 extern char end[];
 PMemory pmem;
@@ -34,16 +35,9 @@ static void *freelist_alloc(void *datastructure_ptr) {
 static void freelist_free(void *datastructure_ptr, void *page_address) {
     FreeListNode* f = (FreeListNode*) datastructure_ptr; 
     /* TODO: Lab2 memory*/
-    if ((int64_t)page_address % PAGE_SIZE)
-        PANIC('freelist_free : not aligned');
-    if (
-        // (int64_t)page_address < ROUNDUP((int64_t)end, PAGE_SIZE) || 
-        (int64_t)page_address > P2K(phystop)
-        )
-        PANIC('freelist_free : page_address');
     memset(page_address, 0xf0, PAGE_SIZE);
     FreeListNode* p = page_address;
-    p -> next = datastructure_ptr;
+    p -> next = f;
     pmem.struct_ptr = p;
 }
 
@@ -56,8 +50,6 @@ static void freelist_init(void *datastructure_ptr, void *start, void *end) {
     /* TODO: Lab2 memory*/
     
     // start, end all virtual address.
-    if((int64_t)start % PAGE_SIZE || (int64_t)end % PAGE_SIZE)
-        PANIC('freelist_init');
     pmem.struct_ptr = NULL;
     for(char* p = start; p <= end; p += PAGE_SIZE) {
         freelist_free(pmem.struct_ptr, p);
@@ -78,10 +70,10 @@ void init_memory_manager(void) {
     
     // notice here for roundup
     void *ROUNDUP_end = ROUNDUP((void *)end, PAGE_SIZE);
-    printf("ROUNDUP_end: %llx,P2K(phystop): %llx, %d", 
-        (uint64_t)ROUNDUP_end, P2K(phystop), (P2K(phystop) - (uint64_t)ROUNDUP_end)/PAGE_SIZE);
     init_PMemory(&pmem);
     pmem.page_init(pmem.struct_ptr, ROUNDUP_end, (void *)P2K(phystop));
+    printf("ROUNDUP_end: %llx,P2K(phystop): %llx, Available pages: %d\n", 
+        (uint64_t)ROUNDUP_end, P2K(phystop), (P2K(phystop) - (uint64_t)ROUNDUP_end)/PAGE_SIZE);
 }
 
 /*
@@ -98,11 +90,13 @@ void free_range(void *start, void *end) {
  * Corrupt the page by filling non-zero value in it for debugging.
  */
 void *kalloc(void) {
+    // printf("kalloc.\n");
     void *p = pmem.page_alloc(pmem.struct_ptr);
     return p;
 }
 
 /* Free the physical memory pointed at by page_address. */
 void kfree(void *page_address) {
+    // printf("kfree.\n");
     pmem.page_free(pmem.struct_ptr, page_address);
 }

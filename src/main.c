@@ -10,6 +10,7 @@ NORETURN void main() {
 	/* TODO: Lab1 print */
     init_memory_manager();
     init_virtual_memory();
+    vm_test();
     
     printf("Hello world!\n");
 }
