@@ -79,8 +79,10 @@ my_vm_free_helper(PTEntriesPtr pgdir, int64_t index) {
         p = &pgdir[x];
         if (*p & PTE_VALID) {
             q = (PTEntriesPtr)P2K(PTE_ADDRESS(*p));  
-            if (index == 0)
+            if (index == 0) {
+                *p = NULL;
                 kfree(q);
+            }
             else
                 my_vm_free_helper(q, index-1);
         }
@@ -137,14 +139,14 @@ void test1_pm_kfree_kalloc() {
     for(; i < test1_len; i++)
         contain[i] = kalloc();
     for(; i > 0; i--)
-        kfree(contain[i]);
+        kfree(contain[i-1]);
     for(; i < test1_len; i++){
         contain2[i] = kalloc();
         assert(contain2[i] == contain[i]);
     }
     for(; i > 0; i--)
-        kfree(contain2[i]);
-    printf("test1_pm pass.");
+        kfree(contain2[i-1]);
+    printf("test1_pm pass.\n");
 }
 
 void test2_vm_map_walk() {
@@ -153,10 +155,12 @@ void test2_vm_map_walk() {
     PTEntriesPtr v[] = {(PTEntriesPtr)P2K(0x12000)};
     PTEntriesPtr p[] = {0x12000};
     my_uvm_map(pgdir, v[0], 1, (int64_t)p[0]);
-    assert(p[0] == my_pgdir_walk(pgdir, v[0], 1));
+    uint64_t a = PTE_ADDRESS(*my_pgdir_walk(pgdir, v[0], 1));
+    assert((uint64_t)p[0] == a);
     my_vm_free(pgdir);
-    assert(my_pgdir_walk(pgdir, v[0], 1) == NULL);
-    printf('test2_vm pass.');
+    uint64_t b = PTE_ADDRESS(*my_pgdir_walk(pgdir, v[0], 1));
+    assert(b == NULL);
+    printf("test2_vm pass.\n");
 }
 
 void vm_test() {
