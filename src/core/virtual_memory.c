@@ -114,7 +114,7 @@ int my_uvm_map(PTEntriesPtr pgdir, void *va, size_t sz, uint64_t pa) {
         PTEntriesPtr pte = my_pgdir_walk(pgdir, va, 1);
         if (pte == NULL) 
             return -1;
-        *pte =  PTE_ADDRESS(pa) | PTE_VALID;
+        *pte =  PTE_ADDRESS(pa) | PTE_USER_DATA;
         pa += PAGE_SIZE;
     }
     return 0;
@@ -129,6 +129,33 @@ void virtual_memory_init(VMemory *vmem_ptr) {
 
 void init_virtual_memory() {
     virtual_memory_init(&vmem);
+}
+
+void test0_yifan_test() {
+    *(int64_t *) P2K(0) = 0xac;
+    char* p = kalloc();
+    printf("kalloc root page table at : %p\n", p);
+    memset(p, 0, PAGE_SIZE);
+    uvm_map(p, (void *)0x1000, PAGE_SIZE, 0);
+    uvm_switch(p);
+    PTEntriesPtr pte = pgdir_walk(p, (void *)0x1000, 0);
+    if (pte == 0) {
+        PANIC(__FILE__, __LINE__, "walk should not return 0\n");
+    }
+    if (!((uint64_t)pte >> 48)) {
+        printf("pte should be virtual address, pte : %p\n", pte);
+        PANIC(__FILE__, __LINE__, "");
+    } 
+    if ((*pte) >> 48) {
+        PANIC(__FILE__, __LINE__, "*pte should store physical address.\n");
+    }
+    printf("pte : %p\n", pte);
+    printf("content at 0x1000 : %llx\n", *((int64_t *)0x1000));
+    if (*((int64_t *)0x1000) == 0xac) {
+        printf("test0 (test_map_region) pass!\n");
+    }else {
+        printf("test_map_region failed.\n");
+    }
 }
 
 void test1_pm_kfree_kalloc() {
@@ -165,6 +192,7 @@ void test2_vm_map_walk() {
 
 void vm_test() {
     /* TODO: Lab2 memory*/
+    test0_yifan_test();
     test1_pm_kfree_kalloc();
     test2_vm_map_walk();
     // Certify that your code works!

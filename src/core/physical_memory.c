@@ -51,7 +51,7 @@ static void freelist_init(void *datastructure_ptr, void *start, void *end) {
     
     // start, end all virtual address.
     pmem.struct_ptr = NULL;
-    for(char* p = start; p <= end; p += PAGE_SIZE) {
+    for(char* p = start; p < end; p += PAGE_SIZE) {
         freelist_free(pmem.struct_ptr, p);
     }
 }
