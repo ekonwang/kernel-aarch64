@@ -43,7 +43,11 @@ NORETURN void main() {
     spawn_init_process();
     enter_scheduler();
 
-    vm_test();
+    //vm_test();
     
     printf("Hello world!\n");
 }
+
+/* cmake .. -DCMAKE_BUILD_TYPE=Debug
+ * make qemu
+ */

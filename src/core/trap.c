@@ -30,7 +30,8 @@ void trap_global_handler(Trapframe *frame) {
 			/* TODO: Lab3 Syscall */
 
             // TODO: warn if `iss` is not zero.
-            (void)iss;
+            if(!iss)
+                PANIC("iss should not be zero");
         } break;
 
         default: {

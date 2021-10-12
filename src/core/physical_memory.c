@@ -51,7 +51,7 @@ static void freelist_init(void *datastructure_ptr, void *start, void *end) {
     
     // start, end all virtual address.
     pmem.struct_ptr = NULL;
-    for(char* p = start; p < end; p += PAGE_SIZE) {
+    for(char* p = start; p < (char*)end; p += PAGE_SIZE) {
         freelist_free(pmem.struct_ptr, p);
     }
 }
@@ -72,8 +72,8 @@ void init_memory_manager(void) {
     void *ROUNDUP_end = ROUNDUP((void *)end, PAGE_SIZE);
     init_PMemory(&pmem);
     pmem.page_init(pmem.struct_ptr, ROUNDUP_end, (void *)P2K(phystop));
-    printf("ROUNDUP_end: %llx,P2K(phystop): %llx, Available pages: %d\n", 
-        (uint64_t)ROUNDUP_end, P2K(phystop), (P2K(phystop) - (uint64_t)ROUNDUP_end)/PAGE_SIZE);
+    // printf("ROUNDUP_end: %llx,P2K(phystop): %llx, Available pages: %d\n", 
+    //    (uint64_t)ROUNDUP_end, P2K(phystop), (P2K(phystop) - (uint64_t)ROUNDUP_end)/PAGE_SIZE - 1);
 }
 
 /*

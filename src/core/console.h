@@ -23,7 +23,6 @@ void printf(const char *fmt, ...);
 NORETURN void _panic(const char *file, usize line, const char *fmt, ...);
 
 #define PANIC(...) _panic(__FILE__, __LINE__, __VA_ARGS__)
-#define panic(__ARGS__) PANIC(__FILE__, __LINE__, __ARGS__)
 
 #define assert(predicate)                                                                          \
     do {                                                                                           \
