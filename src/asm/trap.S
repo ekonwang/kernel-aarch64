@@ -37,10 +37,9 @@ trap_entry:
      * Call trap(struct *trapframe).
      * Hint: The first argument is a stack pointer.
      */
-     mov x0, sp
-     b trap_global_handler
     /* TODO: Lab3 Interrupt */
-
+     mov x0, sp
+     bl trap_global_handler
 
 /* return falls through to `trap_return`. */
 .global trap_return
@@ -71,5 +70,5 @@ trap_return:
      ldp x25, x26, [sp], #16
      ldp x27, x28, [sp], #16
      ldp x29, x30, [sp], #16
-
+     eret
 
