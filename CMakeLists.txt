@@ -19,11 +19,8 @@ set(aarch64_objdump "${aarch64_prefix}objdump")
 set(aarch64_objcopy "${aarch64_prefix}objcopy")
 
 set(aarch64_qemu "qemu-system-aarch64")
-<<<<<<< HEAD
 # set(aarch64_gdb "gdb-multiarch")
 set(aarch64_gdb "gdb")
-=======
->>>>>>> be4fa2a1765392769a4f09e0f77d9c3b699a2fc0
 
 add_subdirectory(src)
 add_subdirectory(boot)

@@ -35,7 +35,7 @@ static void scheduler_simple() {
         /* Loop over process table looking for process to run. */
         /* TODO: Lab3 Schedule */
         p = &ptable.proc[proc_num];
-        if (ptable.proc[proc_num])
+        if (p -> proc_state != )
     }
 }
 
