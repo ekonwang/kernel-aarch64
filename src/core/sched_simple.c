@@ -29,11 +29,13 @@ static void scheduler_simple() {
     struct proc *p;
     struct cpu *c = thiscpu();
     c->proc = NULL;
+    unsigned int proc_num = 0;
 
-    for (;;) {
+    while(1) {
         /* Loop over process table looking for process to run. */
         /* TODO: Lab3 Schedule */
-
+        p = &ptable.proc[proc_num];
+        if (ptable.proc[proc_num])
     }
 }
 
