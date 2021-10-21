@@ -48,10 +48,6 @@ scheduler_simple() {
             printf("process at slot %d used : %d\n", proc_num, p->state);
 
         proc_num = (proc_num + 1) % NPROC;
-    
-        if(proc_num == 0) {
-            while(1);
-        }
     }
 }
 
