@@ -1,4 +1,3 @@
-
 #include <core/proc.h>
 #include <aarch64/mmu.h>
 #include <core/virtual_memory.h>
@@ -25,7 +24,27 @@ extern void trap_return();
 static struct proc *alloc_proc() {
     struct proc *p;
     /* TODO: Lab3 Process */
-    
+    p = alloc_pcb();
+    p->state = EMBRYO;
+
+    char* stack = kalloc();
+    if(stack == NULL) 
+        PANIC("Could not kalloc.\n");
+    p -> kstack = stack;
+    // init sp
+    stack += KSTACKSIZE;
+    // trapframe
+    stack -= sizeof(*(p->tf));
+    memset(stack, 0, sizeof(*(p->tf)));
+    p -> tf = (Trapframe *)stack;
+    // context
+    stack -= sizeof(*(p->context));
+    memset(stack, 0, sizeof(*(p->context)));
+    p -> context = (struct context *)stack;
+    p -> context -> r15 = (u64) forkret;
+    p -> context -> r30 = (u64) trap_return;
+    // ret
+    return p;
 }
 
 /*
@@ -40,8 +59,25 @@ static struct proc *alloc_proc() {
 void spawn_init_process() {
     struct proc *p;
     extern char icode[], eicode[];
+    u64 cpsize = (u64)(eicode - icode), tmpsize;
+    PTEntriesPtr PagePtr;
     p = alloc_proc();
 
+    if (p == NULL) 
+        PANIC("Could not allocate init process");
+    if ((p->pgdir = pgdir_init()) == NULL)
+        PANIC("Could not initialize root pagetable");
+    for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
+        PagePtr = kalloc();
+        if (PagePtr == NULL) 
+            PANIC("kalloc failed");
+        tmpsize = (cpsize-vplace > PAGE_SIZE)? PAGE_SIZE : (cpsize-vplace);
+        uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
+        memcpy(PagePtr, icode + vplace, tmpsize);
+    }
+    uvm_switch(p->pgdir);
+    p -> state = RUNNABLE;
+    p -> sz = ROUNDUP(cpsize, PAGE_SIZE) + PAGE_SIZE;
     /* TODO: Lab3 Process */
 }
 
@@ -50,7 +86,7 @@ void spawn_init_process() {
  */
 void forkret() {
 	/* TODO: Lab3 Process */
-
+    return;
 }
 
 /*
@@ -61,5 +97,6 @@ void forkret() {
 NO_RETURN void exit() {
     struct proc *p = thiscpu()->proc;
     /* TODO: Lab3 Process */
-	
+    PANIC("exit");
+    while(1);
 }

@@ -24,15 +24,15 @@ swtch:
     stp x21, x22, [sp, #-16]!
     stp x19, x20, [sp, #-16]!
     stp x17, x18, [sp, #-16]!
-    stp #0 , x16, [sp, #-16]!
+    stp x15, x16, [sp, #-16]!
 
     # swtich sp 
-    mov x15, sp
-    str x15, [x0]
+    mov x14, sp
+    str x14, [x0]
     mov sp, x1
 
     # switch to new context
-    ldp #0 , x16, [sp], #16
+    ldp x15, x16, [sp], #16
     ldp x17, x18, [sp], #16
     ldp x19, x20, [sp], #16
     ldp x21, x22, [sp], #16
@@ -41,4 +41,4 @@ swtch:
     ldp x27, x28, [sp], #16
     ldp x29, x30, [sp], #16
 
-    br x30
+    br x15

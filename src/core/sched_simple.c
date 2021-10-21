@@ -25,7 +25,8 @@ void swtch(struct context **, struct context *);
  *  - eventually that process transfers control
  *        via swtch back to the scheduler.
  */
-static void scheduler_simple() {
+static void 
+scheduler_simple() {
     struct proc *p;
     struct cpu *c = thiscpu();
     c->proc = NULL;
@@ -34,8 +35,23 @@ static void scheduler_simple() {
     while(1) {
         /* Loop over process table looking for process to run. */
         /* TODO: Lab3 Schedule */
-        p = &ptable.proc[proc_num];
-        if (p -> proc_state != )
+        p = (struct proc*)(&ptable) + proc_num;
+        if (p -> state == RUNNABLE) {
+            uvm_switch(p -> pgdir);
+            c->proc = p;
+            p->state = RUNNING;
+            printf("scheduler: process id %d takes the cpu %d\n", p->pid, cpuid());
+            swtch(&c->scheduler->context, p->context);
+            c->proc = NULL;
+        }
+        if (p->state != UNUSED)
+            printf("process at slot %d used : %d\n", proc_num, p->state);
+
+        proc_num = (proc_num + 1) % NPROC;
+    
+        if(proc_num == 0) {
+            while(1);
+        }
     }
 }
 
@@ -44,7 +60,11 @@ static void scheduler_simple() {
  */
 static void sched_simple() {
     /* TODO: Lab3 Schedule */
-	
+    struct cpu *c = thiscpu();
+    struct proc *p = c -> proc;
+    if (p -> state == RUNNING) 
+        PANIC("cpu process is running.");
+    swtch(&p->context, c->scheduler->context);
 }
 
 /* 
@@ -53,5 +73,12 @@ static void sched_simple() {
  */
 static struct proc *alloc_pcb_simple() {
     /* TODO: Lab3 Schedule */
-
+    struct proc *p = NULL, *start = (struct proc*)&ptable;
+    for (p = start; p < start + NPROC; p++) {
+        if (p -> state == UNUSED) {
+            p -> pid = nextpid++;
+            break;
+        }
+    }
+    return p;
 }

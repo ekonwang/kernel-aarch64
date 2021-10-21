@@ -41,6 +41,7 @@ NORETURN void main() {
 	/* TODO: Lab3 uncomment to test interrupt */
     // test_kernel_interrupt();
     spawn_init_process();
+    printf("spawned.\n");
     enter_scheduler();
 
     //vm_test();

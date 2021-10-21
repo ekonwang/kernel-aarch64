@@ -17,7 +17,7 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 /* Stack must always be 16 bytes aligned. */
 struct context {
     /* TODO: Lab3 Process */
-    u64 slot;  // r15 is added into context for sp register has to be 16-bytes aligned.
+    u64 r15;  // r15 is added into context as an auxiliary register in swtch.
 	u64 r16;
 	u64 r17;
 	u64 r18;
