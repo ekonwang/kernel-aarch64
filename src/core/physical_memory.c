@@ -26,7 +26,7 @@ static void *freelist_alloc(void *datastructure_ptr) {
     /* TODO: Lab2 memory*/
     acquire_spinlock(&pmem.pmemlock);
     if((int64_t)pmem.struct_ptr != NULL){
-        pmem.struct_ptr = (FreeListNode*)pmem.struct_ptr -> next;
+        pmem.struct_ptr = ((FreeListNode*)pmem.struct_ptr) -> next;
         f = pmem.struct_ptr;
     }
     release_spinlock(&pmem.pmemlock);
@@ -56,7 +56,6 @@ static void freelist_init(void *datastructure_ptr, void *start, void *end) {
     /* TODO: Lab2 memory*/
     
     // start, end all virtual address.
-    init_spinlock(&pmem.pmemlock);
     acquire_spinlock(&pmem.pmemlock);
     pmem.struct_ptr = NULL;
     release_spinlock(&pmem.pmemlock);
@@ -67,7 +66,6 @@ static void freelist_init(void *datastructure_ptr, void *start, void *end) {
 
 
 static void init_PMemory(PMemory *pmem_ptr) {
-    pmem_ptr->struct_ptr = (void *)&head;
     pmem_ptr->page_init = freelist_init;
     pmem_ptr->page_alloc = freelist_alloc;
     pmem_ptr->page_free = freelist_free;
@@ -80,9 +78,9 @@ void init_memory_manager(void) {
     // notice here for roundup
     void *ROUNDUP_end = ROUNDUP((void *)end, PAGE_SIZE);
     init_PMemory(&pmem);
+    init_spinlock(&pmem.pmemlock);
+
     pmem.page_init(pmem.struct_ptr, ROUNDUP_end, (void *)P2K(phystop));
-    // printf("ROUNDUP_end: %llx,P2K(phystop): %llx, Available pages: %d\n", 
-    //    (uint64_t)ROUNDUP_end, P2K(phystop), (P2K(phystop) - (uint64_t)ROUNDUP_end)/PAGE_SIZE - 1);
 }
 
 /*
@@ -99,7 +97,6 @@ void free_range(void *start, void *end) {
  * Corrupt the page by filling non-zero value in it for debugging.
  */
 void *kalloc(void) {
-    // printf("kalloc.\n");
     void *p = pmem.page_alloc(pmem.struct_ptr);
     return p;
 }
