@@ -26,8 +26,8 @@ static void *freelist_alloc(void *datastructure_ptr) {
     /* TODO: Lab2 memory*/
     acquire_spinlock(&pmem.pmemlock);
     if((int64_t)pmem.struct_ptr != NULL){
-        pmem.struct_ptr = ((FreeListNode*)pmem.struct_ptr) -> next;
         f = pmem.struct_ptr;
+        pmem.struct_ptr = ((FreeListNode*)pmem.struct_ptr) -> next;
     }
     release_spinlock(&pmem.pmemlock);
     return f;
