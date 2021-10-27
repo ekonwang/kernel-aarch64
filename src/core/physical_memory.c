@@ -24,8 +24,12 @@ static void freelist_free(void *datastructure_ptr, void *page_address);
 static void *freelist_alloc(void *datastructure_ptr) {
     FreeListNode *f = (FreeListNode *) datastructure_ptr; 
     /* TODO: Lab2 memory*/
-    if((int64_t)f != NULL)
-        pmem.struct_ptr = f -> next;
+    acquire_spinlock(&pmem.pmemlock);
+    if((int64_t)pmem.struct_ptr != NULL){
+        pmem.struct_ptr = (FreeListNode*)pmem.struct_ptr -> next;
+        f = pmem.struct_ptr;
+    }
+    release_spinlock(&pmem.pmemlock);
     return f;
 }
 
@@ -37,8 +41,10 @@ static void freelist_free(void *datastructure_ptr, void *page_address) {
     /* TODO: Lab2 memory*/
     memset(page_address, 0xf0, PAGE_SIZE);
     FreeListNode* p = page_address;
-    p -> next = f;
+    acquire_spinlock(&pmem.pmemlock);
+    p -> next = pmem.struct_ptr;
     pmem.struct_ptr = p;
+    release_spinlock(&pmem.pmemlock);
 }
 
 /*
@@ -50,9 +56,12 @@ static void freelist_init(void *datastructure_ptr, void *start, void *end) {
     /* TODO: Lab2 memory*/
     
     // start, end all virtual address.
+    init_spinlock(&pmem.pmemlock);
+    acquire_spinlock(&pmem.pmemlock);
     pmem.struct_ptr = NULL;
+    release_spinlock(&pmem.pmemlock);
     for(char* p = start; p + PAGE_SIZE <= (char*)end; p += PAGE_SIZE) {
-        freelist_free(pmem.struct_ptr, p);
+        freelist_free(f, p);
     }
 }
 
