@@ -38,12 +38,14 @@ struct cpu {
 #define NCPU       4    /* maximum number of CPUs */
 extern struct cpu cpus[NCPU];
 
-static inline struct cpu *thiscpu()
+static inline struct cpu *
+thiscpu()
 {
     return &cpus[cpuid()];
 }
 
-static inline void init_cpu(struct scheduler *scheduler)
+static inline void 
+init_cpu(struct scheduler *scheduler)
 {
     thiscpu()->scheduler = scheduler;
 }
@@ -51,18 +53,41 @@ static inline void init_cpu(struct scheduler *scheduler)
 void init_sched();
 
 
-static inline void enter_scheduler() {
+static inline void 
+enter_scheduler() {
 	assert(thiscpu()->scheduler != NULL);
     thiscpu()->scheduler->op->scheduler();
 }
 
-static inline void sched() {
+static inline void 
+sched() {
     thiscpu()->scheduler->op->sched();
 }
 
-static inline struct proc *alloc_pcb() {
+static inline struct proc 
+*alloc_pcb() {
     assert(thiscpu()->scheduler != NULL);
 	assert(thiscpu()->scheduler->op != NULL);
 	assert(thiscpu()->scheduler->op->alloc_pcb != NULL);
     return thiscpu()->scheduler->op->alloc_pcb();
+}
+/* 
+ * Lock acquiring API for external file such as proc.c .
+ */
+static inline void
+*release_ptable_lock() {
+    assert(thiscpu()->scheduler != NULL);
+	assert(thiscpu()->scheduler->op != NULL);
+    assert(thiscpu()->scheduler->op->release_ptable_lock != NULL);
+    thiscpu()->scheduler->op->release_ptable_lock();
+}
+/* 
+ * Lock releasing API for external file such as proc.c .
+ */
+static inline void
+*acquire_ptable_lock() {
+    assert(thiscpu()->scheduler != NULL);
+	assert(thiscpu()->scheduler->op != NULL);
+    assert(thiscpu()->scheduler->op->acquire_ptable_lock != NULL);
+    thiscpu()->scheduler->op->acquire_ptable_lock();
 }
