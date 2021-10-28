@@ -17,8 +17,8 @@ struct {
  * Other file would use wrapper of these services.
  * Such as :
  * alloc_pcb_simple -> alloc_pcb
- * acquire_ptable_lock -> acquire_lock
- * release_ptable_lock -> release_lock
+ * acquire_ptable_lock -> acquire_proc_lock
+ * release_ptable_lock -> release_proc_lock
  */
 static void scheduler_simple();
 static struct proc *alloc_pcb_simple();
@@ -122,6 +122,7 @@ static struct proc *alloc_pcb_simple() {
             break;
         }
     }
+    p -> state = EMBRYO;
     release_ptable_lock();
     return p;
 }
