@@ -3,22 +3,47 @@
 #include <core/proc.h>
 #include <core/virtual_memory.h>
 
+/* 
+ * Definition of process table.
+ * The table contains NPROC(64) process control block(PCB) .
+ */
 struct {
     struct proc proc[NPROC];
     SpinLock lock;
 } ptable;
 
+/* 
+ * Function headers of scheduler APIs.
+ * Other file would use wrapper of these services.
+ * Such as :
+ * alloc_pcb_simple -> alloc_pcb
+ * acquire_ptable_lock -> acquire_lock
+ * release_ptable_lock -> release_lock
+ */
 static void scheduler_simple();
 static struct proc *alloc_pcb_simple();
 static void sched_simple();
+static void acquire_ptable_lock();
+static void release_ptable_lock();
 struct sched_op simple_op = {
     .scheduler = scheduler_simple, .alloc_pcb = alloc_pcb_simple, .sched = sched_simple,
     .acquire_ptable_lock = acquire_ptable_lock, .release_ptable_lock = release_ptable_lock
 };
 struct scheduler simple_scheduler = {.op = &simple_op};
 
+/* 
+ * Process identity starts at number 1.
+ * Function swtch : simple implementation between process contexts.
+ * |                                  ILLUSTRATION                                   |
+ * |                                               <== User program running context. |
+ * | Kernel (scheduler) running context <== swtch                                    |
+ * | Kernel (scheduler) running context ==> swtch                                    |
+ * |                                        swtch  ==> User program running context  |
+ * |                                    ...                                          |
+ */
 int nextpid = 1;
 void swtch(struct context **, struct context *);
+
 
 /* 
  * Acquire ptable's lock before r&w operation.
@@ -72,7 +97,6 @@ scheduler_simple() {
         proc_num = (proc_num + 1) % NPROC;
     }
 }
-
 /*
  * `Swtch` to thiscpu->scheduler.
  */
@@ -84,7 +108,6 @@ static void sched_simple() {
         PANIC("cpu process is running.");
     swtch(&p->context, c->scheduler->context);
 }
-
 /* 
  * Allocate an unused entry from ptable.
  * Allocate a new pid for it.

@@ -75,7 +75,7 @@ static inline struct proc
  * Lock acquiring API for external file such as proc.c .
  */
 static inline void
-*release_ptable_lock() {
+release_lock() {
     assert(thiscpu()->scheduler != NULL);
 	assert(thiscpu()->scheduler->op != NULL);
     assert(thiscpu()->scheduler->op->release_ptable_lock != NULL);
@@ -85,7 +85,7 @@ static inline void
  * Lock releasing API for external file such as proc.c .
  */
 static inline void
-*acquire_ptable_lock() {
+acquire_lock() {
     assert(thiscpu()->scheduler != NULL);
 	assert(thiscpu()->scheduler->op != NULL);
     assert(thiscpu()->scheduler->op->acquire_ptable_lock != NULL);
