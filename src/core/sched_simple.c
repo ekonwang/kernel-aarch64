@@ -59,8 +59,8 @@ scheduler_simple() {
             uvm_switch(p -> pgdir);
             c->proc = p;
             c->proc->state = RUNNING;
-            release_ptable_lock();
             printf("scheduler: process id (pid:%d) takes the cpu %d\n", p->pid, cpuid());
+            release_ptable_lock();
             swtch(&c->scheduler->context, c->proc->context);
             c->proc = NULL;
         }else {
