@@ -34,12 +34,12 @@ struct scheduler simple_scheduler = {.op = &simple_op};
 /* 
  * Process identity starts at number 1.
  * Function swtch : simple implementation between process contexts.
- * |                                  ILLUSTRATION                                   |
- * |                                               <== User program running context. |
+ * |                                    ILLUSTRATION                                 |
+ * |                                        swtch  <== User program running context. |
  * | Kernel (scheduler) running context <== swtch                                    |
  * | Kernel (scheduler) running context ==> swtch                                    |
  * |                                        swtch  ==> User program running context  |
- * |                                    ...                                          |
+ * |                                         ...                                     |
  */
 int nextpid = 1;
 void swtch(struct context **, struct context *);
@@ -85,12 +85,10 @@ scheduler_simple() {
             c->proc = p;
             c->proc->state = RUNNING;
             printf("scheduler: process id (pid:%d) takes the cpu %d\n", p->pid, cpuid());
-            release_ptable_lock();
             swtch(&c->scheduler->context, c->proc->context);
             c->proc = NULL;
-        }else {
-            release_ptable_lock();
         }
+        release_ptable_lock();
 /*         if (p->state != UNUSED)
             printf("process at slot %d used : %d\n", proc_num, p->state);
  */
@@ -103,10 +101,12 @@ scheduler_simple() {
 static void sched_simple() {
     /* TODO: Lab3 Schedule */
     struct cpu *c = thiscpu();
-    struct proc *p = c -> proc;
+    acquire_ptable_lock();
+    struct proc *p = c -> proc; 
     if (p -> state == RUNNING) 
         PANIC("cpu process is running.");
     swtch(&p->context, c->scheduler->context);
+    release_ptable_lock();
 }
 /* 
  * Allocate an unused entry from ptable.
