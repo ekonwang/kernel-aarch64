@@ -19,6 +19,8 @@ struct sched_op {
     void (*scheduler)();
     struct proc *(*alloc_pcb)();
     void (*sched)();
+    void (*acquire_ptable_lock)();
+    void (*release_ptable_lock)();
 };
 
 struct scheduler {
