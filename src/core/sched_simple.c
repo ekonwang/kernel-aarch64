@@ -53,18 +53,22 @@ scheduler_simple() {
     while(1) {
         /* Loop over process table looking for process to run. */
         /* TODO: Lab3 Schedule */
+        acquire_ptable_lock();
         p = (struct proc*)(&ptable) + proc_num;
         if (p -> state == RUNNABLE) {
             uvm_switch(p -> pgdir);
             c->proc = p;
             c->proc->state = RUNNING;
+            release_ptable_lock();
             printf("scheduler: process id (pid:%d) takes the cpu %d\n", p->pid, cpuid());
             swtch(&c->scheduler->context, c->proc->context);
             c->proc = NULL;
+        }else {
+            release_ptable_lock();
         }
-        if (p->state != UNUSED)
+/*         if (p->state != UNUSED)
             printf("process at slot %d used : %d\n", proc_num, p->state);
-
+ */
         proc_num = (proc_num + 1) % NPROC;
     }
 }
