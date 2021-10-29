@@ -7,9 +7,9 @@
 #include <core/cpu.h>
 
 typedef struct {
-    char * name;
     volatile bool locked;
     struct cpu *cpu;
+    char *name;
 } SpinLock;
 
 void init_spinlock(SpinLock *lock, char *);

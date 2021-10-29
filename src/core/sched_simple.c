@@ -2,6 +2,7 @@
 #include <core/console.h>
 #include <core/proc.h>
 #include <core/virtual_memory.h>
+#include <common/spinlock.h>
 
 /* 
  * Definition of process table.
@@ -10,7 +11,7 @@
 struct {
     struct proc proc[NPROC];
     SpinLock lock;
-} ptable;
+} ptable /* TODO: Lab4 multicore: Add locks where needed in this file or others */;
 
 /* 
  * Function headers of scheduler APIs.
@@ -25,9 +26,11 @@ static struct proc *alloc_pcb_simple();
 static void sched_simple();
 static void acquire_ptable_lock();
 static void release_ptable_lock();
-struct sched_op simple_op = {
-    .scheduler = scheduler_simple, .alloc_pcb = alloc_pcb_simple, .sched = sched_simple,
-    .acquire_ptable_lock = acquire_ptable_lock, .release_ptable_lock = release_ptable_lock
+struct sched_op simple_op = {.scheduler = scheduler_simple, 
+                             .alloc_pcb = alloc_pcb_simple, 
+                             .sched = sched_simple,
+                             .acquire_ptable_lock = acquire_ptable_lock, 
+                             .release_ptable_lock = release_ptable_lock
 };
 struct scheduler simple_scheduler = {.op = &simple_op};
 
@@ -44,19 +47,15 @@ struct scheduler simple_scheduler = {.op = &simple_op};
 int nextpid = 1;
 void swtch(struct context **, struct context *);
 
+static void init_sched_simple() {
+    init_spinlock(&ptable.lock, "ptable");
+}
 
-/* 
- * Acquire ptable's lock before r&w operation.
- */
-static void
-acquire_ptable_lock() {
+static void acquire_ptable_lock() {
     acquire_spinlock(&ptable.lock);
 }
-/*
- * Do not forget to release the lock that has been held previously. 
- */
-static void
-release_ptable_lock() {
+
+static void release_ptable_lock() {
     release_spinlock(&ptable.lock);
 }
 /*
