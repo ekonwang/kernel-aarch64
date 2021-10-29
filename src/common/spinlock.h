@@ -15,3 +15,8 @@ void acquire_spinlock(SpinLock *lock);
 void release_spinlock(SpinLock *lock);
 void wait_spinlock(SpinLock *lock);
 bool holding_spinlock(SpinLock *lock);
+<<<<<<< HEAD
+=======
+
+#endif
+>>>>>>> lab4
