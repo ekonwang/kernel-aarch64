@@ -78,10 +78,9 @@ void init_memory_manager(void) {
     // notice here for roundup
     void *ROUNDUP_end = ROUNDUP((void *)end, PAGE_SIZE);
     init_PMemory(&pmem);
-    init_spinlock(&pmem.pmemlock);
+    init_spinlock(&pmem.pmemlock, "pmem");
 
     pmem.page_init(pmem.struct_ptr, ROUNDUP_end, (void *)P2K(phystop));
-	init_spinlock(&pmem.lock, "pmem");
 }
 
 /*

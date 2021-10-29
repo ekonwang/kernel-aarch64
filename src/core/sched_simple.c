@@ -24,6 +24,7 @@ struct {
 static void scheduler_simple();
 static struct proc *alloc_pcb_simple();
 static void sched_simple();
+static void init_sched_simple();
 static void acquire_ptable_lock();
 static void release_ptable_lock();
 struct sched_op simple_op = {.scheduler = scheduler_simple, 

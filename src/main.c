@@ -50,19 +50,6 @@ void init_system_per_cpu() {
 
 NORETURN void main() {
 	/* TODO: Lab1 print */
-<<<<<<< HEAD
-    init_memory_manager();
-    init_virtual_memory();
-
-    init_system_per_cpu();
-
-	/* TODO: Lab3 uncomment to test interrupt */
-    // test_kernel_interrupt();
-    spawn_init_process();
-    printf("spawned.\n");
-    enter_scheduler();
-=======
-	
     init_system_once();
     wait_spinlock(&init_lock);
 
@@ -74,8 +61,6 @@ NORETURN void main() {
     } else {
         enter_scheduler();
     }
->>>>>>> f21804c0df5824df7eb46ef2270cbae703a007f0
-
     //vm_test();
     
     printf("Hello world!\n");
