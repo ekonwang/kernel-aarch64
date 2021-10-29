@@ -60,4 +60,3 @@ typedef PTEntry *PTEntriesPtr;
 // fetch PA of pte with part of VA.
 #define PTX(index, va) ((va >> (9 * index + 12)) & 0x1ff)
 
-#endif
