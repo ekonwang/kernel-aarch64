@@ -43,7 +43,7 @@ static struct proc *alloc_proc() {
     stack -= sizeof(*(p->context));
     memset(stack, 0, sizeof(*(p->context)));
     p -> context = (struct context *)stack;
-    p -> context -> r15 = (u64) forkret;
+    p -> context -> r15 = (u64) trap_return;
     p -> context -> r30 = (u64) trap_return;
     release_proc_lock();
 
@@ -82,6 +82,7 @@ void spawn_init_process() {
     uvm_switch(p->pgdir);
     p -> state = RUNNABLE;
     p -> sz = ROUNDUP(cpsize, PAGE_SIZE);
+    p -> tf -> r15 = (u64)forkret;
     release_proc_lock();
 }
 
@@ -100,10 +101,10 @@ void forkret() {
  */
 void exit() {
     /* TODO: Lab3 Process */
-    acquire_proc_lock();
+    // acquire_proc_lock();
     proc * p = thiscpu() -> proc;
     p -> state = ZOMBIE;
-    release_proc_lock();
+    // release_proc_lock();
     sched();
     PANIC("ZOMBIE trying exit.");
 }

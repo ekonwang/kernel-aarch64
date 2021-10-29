@@ -39,7 +39,7 @@ static void *freelist_alloc(void *datastructure_ptr) {
 static void freelist_free(void *datastructure_ptr, void *page_address) {
     FreeListNode *f = (FreeListNode *)datastructure_ptr;
     /* TODO: Lab2 memory*/
-    memset(page_address, 0xf0, PAGE_SIZE);
+    // memset(page_address, 0, PAGE_SIZE);
     FreeListNode* p = page_address;
     acquire_spinlock(&pmem.pmemlock);
     p -> next = pmem.struct_ptr;
