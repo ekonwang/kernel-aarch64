@@ -98,9 +98,12 @@ void forkret() {
  * An exited process remains in the zombie state
  * until its parent calls wait() to find out it exited.
  */
-NO_RETURN void exit() {
-    struct proc *p = thiscpu()->proc;
+void exit() {
     /* TODO: Lab3 Process */
-    PANIC("exit");
-    while(1);
+    acquire_proc_lock();
+    proc * p = thiscpu() -> proc;
+    p -> state = ZOMBIE;
+    release_proc_lock();
+    sched();
+    PANIC("ZOMBIE trying exit.");
 }

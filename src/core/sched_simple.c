@@ -27,11 +27,13 @@ static void sched_simple();
 static void init_sched_simple();
 static void acquire_ptable_lock();
 static void release_ptable_lock();
+static bool hold_ptable_lock();
 struct sched_op simple_op = {.scheduler = scheduler_simple, 
                              .alloc_pcb = alloc_pcb_simple, 
                              .sched = sched_simple,
                              .acquire_ptable_lock = acquire_ptable_lock, 
                              .release_ptable_lock = release_ptable_lock,
+                             .hold_ptable_lock = hold_ptable_lock,
                              .init = init_sched_simple
 };
 struct scheduler simple_scheduler = {.op = &simple_op};
@@ -59,6 +61,10 @@ static void acquire_ptable_lock() {
 
 static void release_ptable_lock() {
     release_spinlock(&ptable.lock);
+}
+
+static bool hold_ptable_lock() {
+    return holding_spinlock(&ptable.lock);
 }
 /*
  * Per-CPU process scheduler
@@ -102,12 +108,17 @@ scheduler_simple() {
 static void sched_simple() {
     /* TODO: Lab3 Schedule */
     struct cpu *c = thiscpu();
-    acquire_ptable_lock();
     struct proc *p = c -> proc; 
+    if (!hold_ptable_lock) {
+        PANIC("process not holding lock");
+    }
+    /* else {
+        printf("sched: process %d holding lock.\n", (p -> pid));
+    } */
     if (p -> state == RUNNING) 
         PANIC("cpu process is running.");
     swtch(&p->context, c->scheduler->context);
-    release_ptable_lock();
+    // release_ptable_lock();
 }
 /* 
  * Allocate an unused entry from ptable.

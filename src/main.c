@@ -30,7 +30,7 @@ void init_system_once() {
     init_memory_manager();
     init_virtual_memory();
 
-    vm_test();
+    // vm_test();
     arena_test();
 
     release_spinlock(&init_lock);

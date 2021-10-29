@@ -1,5 +1,6 @@
 #include <aarch64/mmu.h>
 #include <common/types.h>
+#include <core/physical_memory.h>
 #include <core/console.h>
 #include <common/string.h>
 
