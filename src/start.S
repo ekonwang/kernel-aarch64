@@ -148,7 +148,7 @@ el1:
     isb
 
     /* read CPUID. */
-    mrs     x0, mpidr_el1
+    mrs     x0, m
     and     x0, x0, #3
 
     /* sp = _start - CPUID * KERNEL_STACK_SIZE */
