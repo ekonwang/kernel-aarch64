@@ -100,6 +100,8 @@ scheduler_simple() {
             printf("process at slot %d used : %d\n", proc_num, p->state);
  */
         proc_num = (proc_num + 1) % NPROC;
+        printf("cpuid : %d  =>  proc_id : %d\n", cpuid(), proc_num);
+        if (proc_num == 0) PANIC("reached end");
     }
 }
 /*
