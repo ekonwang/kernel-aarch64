@@ -30,16 +30,10 @@ static void release_ptable_lock();
 struct sched_op simple_op = {.scheduler = scheduler_simple, 
                              .alloc_pcb = alloc_pcb_simple, 
                              .sched = sched_simple,
-<<<<<<< HEAD
-                             .init = init_sched_simple,
-                             .acquire_lock = acquire_ptable_lock,
-                             .release_lock = release_ptable_lock};
-=======
                              .acquire_ptable_lock = acquire_ptable_lock, 
                              .release_ptable_lock = release_ptable_lock,
                              .init = init_sched_simple
 };
->>>>>>> lab4
 struct scheduler simple_scheduler = {.op = &simple_op};
 
 /* 
@@ -85,8 +79,6 @@ scheduler_simple() {
     while(1) {
         /* Loop over process table looking for process to run. */
         /* TODO: Lab3 Schedule */
-<<<<<<< HEAD
-=======
         acquire_ptable_lock();
         p = (struct proc*)(&ptable) + proc_num;
         if (p -> state == RUNNABLE) {
@@ -102,26 +94,12 @@ scheduler_simple() {
             printf("process at slot %d used : %d\n", proc_num, p->state);
  */
         proc_num = (proc_num + 1) % NPROC;
->>>>>>> lab4
     }
 }
 /*
  * `Swtch` to thiscpu->scheduler.
  */
 static void sched_simple() {
-<<<<<<< HEAD
-    /* TODO: Your code here. */
-    if (!holding_spinlock(&ptable.lock)) {
-        PANIC("sched: not holding ptable lock");
-    }
-    if (thiscpu()->proc->state == RUNNING) {
-        PANIC("sched: process running");
-    }
-    /* TODO: Lab3 Schedule */
-}
-
-/*
-=======
     /* TODO: Lab3 Schedule */
     struct cpu *c = thiscpu();
     acquire_ptable_lock();
@@ -132,14 +110,11 @@ static void sched_simple() {
     release_ptable_lock();
 }
 /* 
->>>>>>> lab4
  * Allocate an unused entry from ptable.
  * Allocate a new pid for it.
  */
 static struct proc *alloc_pcb_simple() {
     /* TODO: Lab3 Schedule */
-<<<<<<< HEAD
-=======
     struct proc *p = NULL, *start = (struct proc*)&ptable;
     acquire_ptable_lock();
     for (p = start; p < start + NPROC; p++) {
@@ -151,5 +126,4 @@ static struct proc *alloc_pcb_simple() {
     p -> state = EMBRYO;
     release_ptable_lock();
     return p;
->>>>>>> lab4
 }

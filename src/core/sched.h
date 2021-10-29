@@ -39,13 +39,9 @@ struct cpu {
 #define NCPU 4 /* maximum number of CPUs */
 extern struct cpu cpus[NCPU];
 
-<<<<<<< HEAD
-static inline struct cpu *thiscpu() {
-=======
 static inline struct cpu *
 thiscpu()
 {
->>>>>>> lab4
     return &cpus[cpuid()];
 }
 
@@ -85,12 +81,6 @@ release_proc_lock() {
     assert(thiscpu()->scheduler->op->release_ptable_lock != NULL);
     thiscpu()->scheduler->op->release_ptable_lock();
 }
-<<<<<<< HEAD
-
-static inline void release_sched_lock() {
-    thiscpu()->scheduler->op->release_lock();
-}
-=======
 /* 
  * Lock releasing API for external file such as proc.c .
  */
@@ -101,4 +91,3 @@ acquire_proc_lock() {
     assert(thiscpu()->scheduler->op->acquire_ptable_lock != NULL);
     thiscpu()->scheduler->op->acquire_ptable_lock();
 }
->>>>>>> lab4

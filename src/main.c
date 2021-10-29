@@ -52,12 +52,7 @@ void init_system_per_cpu() {
 }
 
 NORETURN void main() {
-<<<<<<< HEAD
-    /* TODO: Lab1 print */
-
-=======
 	/* TODO: Lab1 print */
->>>>>>> lab4
     init_system_once();
     wait_spinlock(&init_lock);
 
@@ -69,12 +64,9 @@ NORETURN void main() {
     } else {
         enter_scheduler();
     }
-<<<<<<< HEAD
-=======
     //vm_test();
     
     printf("Hello world!\n");
->>>>>>> lab4
 }
 
 

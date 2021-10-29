@@ -9,8 +9,6 @@
  */
 u64 syscall_dispatch(Trapframe *frame) {
     /* TODO: Lab3 Syscall */
-<<<<<<< HEAD
-=======
     u64 sysnum = frame -> r8, retval = 0;
     switch(sysnum) {
     case SYS_myexecve:
@@ -24,5 +22,4 @@ u64 syscall_dispatch(Trapframe *frame) {
         break;
     }
 	return retval;
->>>>>>> lab4
 }

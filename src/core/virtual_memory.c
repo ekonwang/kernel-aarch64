@@ -39,12 +39,9 @@ void uvm_switch(PTEntriesPtr pgdir) {
 static PTEntriesPtr 
 my_pgdir_init() {
     /* TODO: Lab2 memory*/
-<<<<<<< HEAD
-=======
     PTEntriesPtr pgdir = kalloc();
     memset(pgdir, 0, PAGE_SIZE);
     return pgdir;
->>>>>>> lab4
 }
 
 /*
@@ -56,8 +53,6 @@ my_pgdir_init() {
 static PTEntriesPtr 
 my_pgdir_walk(PTEntriesPtr pgdir, void *vak, int alloc) {
     /* TODO: Lab2 memory*/
-<<<<<<< HEAD
-=======
     int index = 3;
     for(; index > 0; index--) {
         PTEntriesPtr p = &pgdir[PTX(index, (int64_t)vak)];
@@ -90,7 +85,6 @@ my_vm_free_helper(PTEntriesPtr pgdir, int64_t index) {
                 my_vm_free_helper(q, index-1);
         }
     }
->>>>>>> lab4
 }
 
 /* Free a user page table and all the physical memory pages. */
@@ -98,10 +92,7 @@ my_vm_free_helper(PTEntriesPtr pgdir, int64_t index) {
 void 
 my_vm_free(PTEntriesPtr pgdir) {
     /* TODO: Lab2 memory*/
-<<<<<<< HEAD
-=======
     my_vm_free_helper(pgdir, 3);
->>>>>>> lab4
 }
 
 /*
@@ -113,8 +104,6 @@ my_vm_free(PTEntriesPtr pgdir) {
 
 int my_uvm_map(PTEntriesPtr pgdir, void *va, size_t sz, uint64_t pa) {
     /* TODO: Lab2 memory*/
-<<<<<<< HEAD
-=======
     char *start = (char *) ROUNDDOWN((uint64_t)va, PAGE_SIZE),
          *end = (char *) ROUNDDOWN((uint64_t)va + sz - 1, PAGE_SIZE),
          *p = start;
@@ -126,7 +115,6 @@ int my_uvm_map(PTEntriesPtr pgdir, void *va, size_t sz, uint64_t pa) {
         pa += PAGE_SIZE;
     }
     return 0;
->>>>>>> lab4
 }
 
 void virtual_memory_init(VMemory *vmem_ptr) {

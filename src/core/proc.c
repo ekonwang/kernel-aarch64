@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-
-=======
 #include <core/proc.h>
->>>>>>> lab4
 #include <aarch64/mmu.h>
 #include <common/string.h>
 #include <core/console.h>
@@ -93,14 +89,8 @@ void spawn_init_process() {
  * A fork child will first swtch here, and then "return" to user space.
  */
 void forkret() {
-<<<<<<< HEAD
-    /* TODO: Lab3 Process */
-
-    release_sched_lock();
-=======
 	/* TODO: Lab3 Process */
     release_proc_lock();
->>>>>>> lab4
 }
 
 /*
@@ -111,10 +101,6 @@ void forkret() {
 NO_RETURN void exit() {
     struct proc *p = thiscpu()->proc;
     /* TODO: Lab3 Process */
-<<<<<<< HEAD
-}
-=======
     PANIC("exit");
     while(1);
 }
->>>>>>> lab4

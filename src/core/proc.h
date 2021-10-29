@@ -17,13 +17,6 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 /* Stack must always be 16 bytes aligned. */
 struct context {
     /* TODO: Lab3 Process */
-<<<<<<< HEAD
-};
-
-struct proc {
-    u64 sz;                  /* Size of process memory (bytes)          */
-    u64 *pgdir;              /* Page table                              */
-=======
     u64 r15;  // r15 is added into context as an auxiliary register in swtch.
 	u64 r16;
 	u64 r17;
@@ -45,7 +38,6 @@ struct proc {
 struct proc {
     u64 sz;                 /* Size of process memory (bytes)          */
     u64 *pgdir;             /* Page table                              */
->>>>>>> lab4
     char *kstack;            /* Bottom of kernel stack for this process */
     enum procstate state;    /* Process state                           */
     int pid;                 /* Process ID                              */

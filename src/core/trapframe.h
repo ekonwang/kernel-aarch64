@@ -12,10 +12,6 @@
  * in your trapframe.
  */
 typedef struct {
-<<<<<<< HEAD
-    /* TODO: Lab3 Interrupt */
-
-=======
 	/* TODO: Lab3 Interrupt */
     u64 SP_EL0;  		// stack pointer.
 	u64 SPSR_EL1;		// Pstate : CPU state.
@@ -51,7 +47,6 @@ typedef struct {
 	u64 r28;
 	u64 r29;
 	u64 r30;
->>>>>>> lab4
 } Trapframe;
 
 #endif

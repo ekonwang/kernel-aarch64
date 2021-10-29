@@ -50,8 +50,6 @@ trap_return:
      * and then `pop x2`.
      */
     /* TODO: Lab3 Interrupt */
-<<<<<<< HEAD
-=======
      ldp x3, x2, [sp], #16
      ldp x1, x0, [sp], #16
      msr elr_el1, x1
@@ -74,4 +72,3 @@ trap_return:
      ldp x29, x30, [sp], #16
      eret
 
->>>>>>> lab4

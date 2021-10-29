@@ -15,8 +15,6 @@
 .global swtch
 swtch:
     /* TODO: Lab3 Schedule */
-<<<<<<< HEAD
-=======
 
     # save callee saved registers
     stp x29, x30, [sp, #-16]!
@@ -44,4 +42,3 @@ swtch:
     ldp x29, x30, [sp], #16
 
     br x15
->>>>>>> lab4

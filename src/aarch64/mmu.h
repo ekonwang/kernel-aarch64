@@ -54,10 +54,6 @@ typedef u64 PTEntry;
 typedef PTEntry PTEntries[N_PTE_PER_TABLE];
 typedef PTEntry *PTEntriesPtr;
 
-<<<<<<< HEAD
-#define PTE_ADDRESS(pte) ((pte) & (~0xFFF))
-#define PTE_FLAGS(pte)   ((pte) & (0xFFF))
-=======
 #define PTE_ADDRESS(pte)   ((pte) & ~0xFFF)
 #define PTE_FLAGS(pte)  ((pte) &  0xFFF)
 
@@ -65,4 +61,3 @@ typedef PTEntry *PTEntriesPtr;
 #define PTX(index, va) ((va >> (9 * index + 12)) & 0x1ff)
 
 #endif
->>>>>>> lab4
