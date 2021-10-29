@@ -45,16 +45,9 @@ thiscpu()
     return &cpus[cpuid()];
 }
 
-<<<<<<< HEAD
-static inline void 
-init_cpu(struct scheduler *scheduler)
-{
-    thiscpu()->scheduler = scheduler;
-=======
 static inline void init_sched() {
     // thiscpu()->scheduler->op->init();
     simple_scheduler.op->init();
->>>>>>> f21804c0df5824df7eb46ef2270cbae703a007f0
 }
 
 static inline void init_cpu(struct scheduler *scheduler) {
@@ -62,14 +55,12 @@ static inline void init_cpu(struct scheduler *scheduler) {
     // init_sched();
 }
 
-static inline void 
-enter_scheduler() {
+static inline void enter_scheduler() {
 	assert(thiscpu()->scheduler != NULL);
     thiscpu()->scheduler->op->scheduler();
 }
 
-static inline void 
-sched() {
+static inline void sched() {
     thiscpu()->scheduler->op->sched();
 }
 
