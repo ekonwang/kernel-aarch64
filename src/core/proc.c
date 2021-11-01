@@ -6,7 +6,7 @@
 #include <core/sched.h>
 #include <core/console.h>
 
-void forkret();
+extern void to_forkret();
 extern void trap_return();
 /*
  * Look through the process table for an UNUSED proc.
@@ -42,8 +42,6 @@ static struct proc *alloc_proc() {
     stack -= sizeof(*(p->context));
     memset(stack, 0, sizeof(*(p->context)));
     p -> context = (struct context *)stack;
-    p -> context -> r15 = (u64) forkret;
-    p -> context -> r30 = (u64) trap_return;
     release_proc_lock();
 
     return p;
@@ -81,7 +79,7 @@ void spawn_init_process() {
     uvm_switch(p->pgdir);
     p -> state = RUNNABLE;
     p -> sz = ROUNDUP(cpsize, PAGE_SIZE);
-    release_proc_lock();
+    to_forkret();
 }
 
 /*

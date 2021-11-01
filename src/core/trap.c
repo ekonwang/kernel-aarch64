@@ -21,7 +21,7 @@ void trap_global_handler(Trapframe *frame) {
     switch (ec) {
         case ESR_EC_UNKNOWN: {
             if (ir)
-                PANIC("unknown error");
+                PANIC("esr_ec unknown error");
             else
                 interrupt_global_handler();
         } break;

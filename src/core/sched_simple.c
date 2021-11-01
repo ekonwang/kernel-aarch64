@@ -48,6 +48,7 @@ struct scheduler simple_scheduler = {.op = &simple_op};
  */
 int nextpid = 1;
 void swtch(struct context **, struct context *);
+void to_forkret();
 
 static void init_sched_simple() {
     init_spinlock(&ptable.lock, "ptable");
