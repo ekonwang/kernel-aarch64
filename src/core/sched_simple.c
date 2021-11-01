@@ -121,7 +121,6 @@ static void sched_simple() {
     if (p -> state == RUNNING) 
         PANIC("cpu process is running.");
     swtch(&p->context, c->scheduler->context);
-    // release_ptable_lock();
 }
 /* 
  * Allocate an unused entry from ptable.

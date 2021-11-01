@@ -46,7 +46,6 @@ static struct proc *alloc_proc() {
     release_proc_lock();
 
     p -> context -> r30 = (u64)trap_return;
-    p -> tf -> r30 = (u64)trap_return;
 
     return p;
 }
@@ -82,7 +81,6 @@ void spawn_init_process() {
     }
     release_proc_lock();
     
-    uvm_switch(p->pgdir);
     p -> state = RUNNABLE;
     p -> sz = ROUNDUP(cpsize, PAGE_SIZE);
     
@@ -109,5 +107,5 @@ void exit() {
     p -> state = ZOMBIE;
     // release_proc_lock();
     sched();
-    PANIC("ZOMBIE trying exit.");
+    PANIC("ERROR: ZOMBIE trying exit.");
 }
