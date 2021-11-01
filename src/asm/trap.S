@@ -1,4 +1,9 @@
 /* `exception_vector.S` send all traps here. */
+.global to_forkret
+to_forkret:
+     bl forkret
+     b trap_return
+
 .global trap_entry
 trap_entry:
      /* use `stp`/`ldp` in favor of `str`/`ldr` to maintain stack alignment. */
