@@ -7,7 +7,7 @@
 #include <core/sched.h>
 #include <core/virtual_memory.h>
 
-void forkret();
+extern void to_forkret();
 extern void trap_return();
 /*
  * Look through the process table for an UNUSED proc.
@@ -43,9 +43,10 @@ static struct proc *alloc_proc() {
     stack -= sizeof(*(p->context));
     memset(stack, 0, sizeof(*(p->context)));
     p -> context = (struct context *)stack;
-    p -> context -> r15 = (u64) trap_return;
-    p -> context -> r30 = (u64) trap_return;
     release_proc_lock();
+
+    p -> context -> r30 = (u64)trap_return;
+    p -> tf -> r30 = (u64)trap_return;
 
     return p;
 }
@@ -79,11 +80,13 @@ void spawn_init_process() {
         uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
         memcpy(PagePtr, icode + vplace, tmpsize);
     }
+    release_proc_lock();
+    
     uvm_switch(p->pgdir);
     p -> state = RUNNABLE;
     p -> sz = ROUNDUP(cpsize, PAGE_SIZE);
-    p -> tf -> r15 = (u64)forkret;
-    release_proc_lock();
+    
+    p -> context -> r30 = (u64)to_forkret;
 }
 
 /*
