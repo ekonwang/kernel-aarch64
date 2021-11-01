@@ -110,8 +110,4 @@ void exit() {
     // release_proc_lock();
     sched();
     PANIC("ZOMBIE trying exit.");
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> lab4
