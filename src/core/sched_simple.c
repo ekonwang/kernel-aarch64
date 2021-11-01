@@ -103,12 +103,10 @@ scheduler_simple() {
 static void sched_simple() {
     /* TODO: Lab3 Schedule */
     struct cpu *c = thiscpu();
-    acquire_ptable_lock();
     struct proc *p = c -> proc; 
     if (p -> state == RUNNING) 
         PANIC("cpu process is running.");
     swtch(&p->context, c->scheduler->context);
-    release_ptable_lock();
 }
 /* 
  * Allocate an unused entry from ptable.
