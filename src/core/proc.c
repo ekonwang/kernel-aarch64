@@ -30,7 +30,6 @@ static struct proc *alloc_proc() {
     if(stack == NULL) 
         PANIC("Could not kalloc.\n");
     
-    acquire_proc_lock();
     p -> kstack = stack;
     
     // init sp and trapframe.
@@ -42,7 +41,6 @@ static struct proc *alloc_proc() {
     stack -= sizeof(*(p->context));
     memset(stack, 0, sizeof(*(p->context)));
     p -> context = (struct context *)stack;
-    release_proc_lock();
 
     p -> context -> r30 = (u64)trap_return;
     p -> tf -> r30 = (u64)trap_return;
@@ -66,7 +64,6 @@ void spawn_init_process() {
     PTEntriesPtr PagePtr;
     p = alloc_proc();
     
-    acquire_proc_lock();
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
@@ -79,7 +76,6 @@ void spawn_init_process() {
         uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
         memcpy(PagePtr, icode + vplace, tmpsize);
     }
-    release_proc_lock();
     
     uvm_switch(p->pgdir);
     p -> state = RUNNABLE;
@@ -93,7 +89,6 @@ void spawn_init_process() {
  */
 void forkret() {
 	/* TODO: Lab3 Process */
-    release_proc_lock();
 }
 
 /*
