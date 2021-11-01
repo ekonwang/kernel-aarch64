@@ -16,6 +16,7 @@ struct scheduler simple_scheduler = {.op = &simple_op};
 
 int nextpid = 1;
 void swtch(struct context **, struct context *);
+void to_forkret();
 /*
  * Per-CPU process scheduler
  * Each CPU calls scheduler() after setting itself up.
