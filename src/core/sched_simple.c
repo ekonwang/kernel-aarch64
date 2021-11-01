@@ -45,9 +45,6 @@ scheduler_simple() {
             swtch(&c->scheduler->context, p->context);
             c->proc = NULL;
         }
-        if (p->state != UNUSED)
-            printf("process at slot %d used : %d\n", proc_num, p->state);
-
         proc_num = (proc_num + 1) % NPROC;
     }
 }
