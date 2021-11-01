@@ -44,6 +44,9 @@ static struct proc *alloc_proc() {
     p -> context = (struct context *)stack;
     release_proc_lock();
 
+    p -> context -> r30 = (u64)trap_return;
+    p -> tf -> r30 = (u64)trap_return;
+
     return p;
 }
 
@@ -76,10 +79,13 @@ void spawn_init_process() {
         uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
         memcpy(PagePtr, icode + vplace, tmpsize);
     }
+    release_proc_lock();
+    
     uvm_switch(p->pgdir);
     p -> state = RUNNABLE;
     p -> sz = ROUNDUP(cpsize, PAGE_SIZE);
-    to_forkret();
+    
+    p -> context -> r30 = (u64)to_forkret;
 }
 
 /*
