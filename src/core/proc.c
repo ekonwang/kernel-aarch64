@@ -6,7 +6,7 @@
 #include <core/sched.h>
 #include <core/console.h>
 
-void forkret();
+extern void to_forkret();
 extern void trap_return();
 /*
  * Look through the process table for an UNUSED proc.
@@ -24,26 +24,29 @@ extern void trap_return();
 static struct proc *alloc_proc() {
     struct proc *p;
     /* TODO: Lab3 Process */
+    // Function alloc_pcb set PCB state from unused to EMBRO.
     p = alloc_pcb();
-    p->state = EMBRYO;
-
     char* stack = kalloc();
     if(stack == NULL) 
         PANIC("Could not kalloc.\n");
+    
+    acquire_proc_lock();
     p -> kstack = stack;
-    // init sp
+    
+    // init sp and trapframe.
     stack += KSTACKSIZE;
-    // trapframe
     stack -= sizeof(*(p->tf));
     memset(stack, 0, sizeof(*(p->tf)));
     p -> tf = (Trapframe *)stack;
-    // context
+
     stack -= sizeof(*(p->context));
     memset(stack, 0, sizeof(*(p->context)));
     p -> context = (struct context *)stack;
-    p -> context -> r15 = (u64) forkret;
-    p -> context -> r30 = (u64) trap_return;
-    // ret
+    release_proc_lock();
+
+    p -> context -> r30 = (u64)trap_return;
+    p -> tf -> r30 = (u64)trap_return;
+
     return p;
 }
 
@@ -62,7 +65,8 @@ void spawn_init_process() {
     u64 cpsize = (u64)(eicode - icode), tmpsize;
     PTEntriesPtr PagePtr;
     p = alloc_proc();
-
+    
+    acquire_proc_lock();
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
@@ -75,10 +79,13 @@ void spawn_init_process() {
         uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
         memcpy(PagePtr, icode + vplace, tmpsize);
     }
+    release_proc_lock();
+    
     uvm_switch(p->pgdir);
     p -> state = RUNNABLE;
-    p -> sz = ROUNDUP(cpsize, PAGE_SIZE) + PAGE_SIZE;
-    /* TODO: Lab3 Process */
+    p -> sz = ROUNDUP(cpsize, PAGE_SIZE);
+    
+    p -> context -> r30 = (u64)to_forkret;
 }
 
 /*
@@ -86,7 +93,7 @@ void spawn_init_process() {
  */
 void forkret() {
 	/* TODO: Lab3 Process */
-    return;
+    release_proc_lock();
 }
 
 /*
@@ -94,9 +101,12 @@ void forkret() {
  * An exited process remains in the zombie state
  * until its parent calls wait() to find out it exited.
  */
-NO_RETURN void exit() {
-    struct proc *p = thiscpu()->proc;
+void exit() {
     /* TODO: Lab3 Process */
-    PANIC("exit");
-    while(1);
+    // acquire_proc_lock();
+    proc * p = thiscpu() -> proc;
+    p -> state = ZOMBIE;
+    // release_proc_lock();
+    sched();
+    PANIC("ZOMBIE trying exit.");
 }
