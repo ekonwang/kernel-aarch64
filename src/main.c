@@ -64,9 +64,14 @@ NORETURN void main() {
     } else {
         enter_scheduler();
     }
+<<<<<<< HEAD
     //vm_test();
     
     printf("Hello world!\n");
+=======
+
+    no_return();
+>>>>>>> 924e7781eacaf6a5fc5b43ceb494689abacf0a58
 }
 
 

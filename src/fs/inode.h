@@ -67,7 +67,7 @@ typedef struct InodeTree {
 
     // decrement reference count of `inode` by one.
     // if reference count drops to zero and there's no file or directory linked to this
-    // inode, `iput` is in charge of freeing this inode both in memory and on disk.
+    // inode, `put` is in charge of freeing this inode both in memory and on disk.
     //
     // NOTE: caller must NOT hold the lock of `inode`.
     void (*put)(OpContext *ctx, Inode *inode);
@@ -99,7 +99,7 @@ typedef struct InodeTree {
     // add a new directory entry in `inode` with `name`, which points to another
     // inode with `inode_no`.
     // the index of new directory entry is returned.
-    // `link` does not ensure all directory entries have unique names.
+    // `insert` does not ensure all directory entries have unique names.
     //
     // NOTE: caller must hold the lock of `inode`.
     usize (*insert)(OpContext *ctx, Inode *inode, const char *name, usize inode_no);
