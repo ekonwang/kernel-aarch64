@@ -14,6 +14,8 @@ static const BlockCache *cache;
 static Arena arena;
 
 // return which block `inode_no` lives on.
+// `inode_no` is the inode number.
+// it only return where the block the inode lives on, to access where the inodeEntry is, use `get_entry` method.
 static INLINE usize to_block_no(usize inode_no) {
     return sblock->inode_start + (inode_no / (INODE_PER_BLOCK));
 }
@@ -55,6 +57,8 @@ static usize inode_alloc(OpContext *ctx, InodeType type) {
     assert(type != INODE_INVALID);
 
     // TODO
+    // 1. allocate space for the new inode.
+    // 2. using arena to initialize it.
 
     PANIC("failed to allocate inode on disk");
 }
