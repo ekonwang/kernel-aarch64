@@ -38,7 +38,7 @@ void uvm_switch(PTEntriesPtr pgdir) {
 
 static PTEntriesPtr 
 my_pgdir_init() {
-    /* TODO: Lab2 memory*/
+    /* : Lab2 memory*/
     PTEntriesPtr pgdir = kalloc();
     memset(pgdir, 0, PAGE_SIZE);
     return pgdir;
@@ -52,7 +52,7 @@ my_pgdir_init() {
 
 static PTEntriesPtr 
 my_pgdir_walk(PTEntriesPtr pgdir, void *vak, int alloc) {
-    /* TODO: Lab2 memory*/
+    /* : Lab2 memory*/
     int index = 3;
     for(; index > 0; index--) {
         PTEntriesPtr p = &pgdir[PTX(index, (int64_t)vak)];
@@ -91,7 +91,7 @@ my_vm_free_helper(PTEntriesPtr pgdir, int64_t index) {
 
 void 
 my_vm_free(PTEntriesPtr pgdir) {
-    /* TODO: Lab2 memory*/
+    /* : Lab2 memory*/
     my_vm_free_helper(pgdir, 3);
 }
 
@@ -103,7 +103,7 @@ my_vm_free(PTEntriesPtr pgdir) {
  */
 
 int my_uvm_map(PTEntriesPtr pgdir, void *va, size_t sz, uint64_t pa) {
-    /* TODO: Lab2 memory*/
+    /* : Lab2 memory*/
     char *start = (char *) ROUNDDOWN((uint64_t)va, PAGE_SIZE),
          *end = (char *) ROUNDDOWN((uint64_t)va + sz - 1, PAGE_SIZE),
          *p = start;
@@ -188,7 +188,7 @@ void test2_vm_map_walk() {
 }
 
 void vm_test() {
-    /* TODO: Lab2 memory*/
+    /* : Lab2 memory*/
     test0_yifan_test();
     test1_pm_kfree_kalloc();
     test2_vm_map_walk();

@@ -11,7 +11,7 @@
 struct {
     struct proc proc[NPROC];
     SpinLock lock;
-} ptable /* TODO: Lab4 multicore: Add locks where needed in this file or others */;
+} ptable /* : Lab4 multicore: Add locks where needed in this file or others */;
 
 /* 
  * Function headers of scheduler APIs.
@@ -85,7 +85,7 @@ scheduler_simple() {
 
     while(1) {
         /* Loop over process table looking for process to run. */
-        /* TODO: Lab3 Schedule */
+        /* : Lab3 Schedule */
         acquire_ptable_lock();
         p = (struct proc*)(&ptable) + proc_num;
         if (p -> state == RUNNABLE) {
@@ -109,7 +109,7 @@ scheduler_simple() {
  * `Swtch` to thiscpu->scheduler.
  */
 static void sched_simple() {
-    /* TODO: Lab3 Schedule */
+    /* : Lab3 Schedule */
     struct cpu *c = thiscpu();
     struct proc *p = c -> proc; 
     if (!hold_ptable_lock) {
@@ -127,7 +127,7 @@ static void sched_simple() {
  * Allocate a new pid for it.
  */
 static struct proc *alloc_pcb_simple() {
-    /* TODO: Lab3 Schedule */
+    /* : Lab3 Schedule */
     struct proc *p = NULL, *start = (struct proc*)&ptable;
     acquire_ptable_lock();
     for (p = start; p < start + NPROC; p++) {

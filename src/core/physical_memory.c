@@ -5,7 +5,7 @@
 #include <common/string.h>
 
 extern char end[];
-PMemory pmem; /* TODO: Lab4 multicore: Add locks where needed */
+PMemory pmem; /* : Lab4 multicore: Add locks where needed */
 FreeListNode head;
 /*
  * Editable, as long as it works as a memory manager.
@@ -23,7 +23,7 @@ static void freelist_free(void *datastructure_ptr, void *page_address);
  */
 static void *freelist_alloc(void *datastructure_ptr) {
     FreeListNode *f = (FreeListNode *)datastructure_ptr;
-    /* TODO: Lab2 memory*/
+    /* : Lab2 memory*/
     acquire_spinlock(&pmem.pmemlock);
     if((int64_t)pmem.struct_ptr != NULL){
         f = pmem.struct_ptr;
@@ -38,7 +38,7 @@ static void *freelist_alloc(void *datastructure_ptr) {
  */
 static void freelist_free(void *datastructure_ptr, void *page_address) {
     FreeListNode *f = (FreeListNode *)datastructure_ptr;
-    /* TODO: Lab2 memory*/
+    /* : Lab2 memory*/
     // memset(page_address, 0xf0, PAGE_SIZE);
     FreeListNode* p = page_address;
     acquire_spinlock(&pmem.pmemlock);
@@ -53,7 +53,7 @@ static void freelist_free(void *datastructure_ptr, void *page_address) {
 
 static void freelist_init(void *datastructure_ptr, void *start, void *end) {
     FreeListNode *f = (FreeListNode *)datastructure_ptr;
-    /* TODO: Lab2 memory*/
+    /* : Lab2 memory*/
     
     // start, end all virtual address.
     acquire_spinlock(&pmem.pmemlock);

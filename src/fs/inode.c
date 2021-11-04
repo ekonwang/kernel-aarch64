@@ -57,8 +57,18 @@ static usize inode_alloc(OpContext *ctx, InodeType type) {
     assert(type != INODE_INVALID);
 
     // TODO
-    // 1. allocate space for the new inode.
-    // 2. using arena to initialize it.
+    // allocate inode number for this inode.
+    // allocate inode space in memory using arena.
+    // making sure list `head` is locked when adding this inode to the list.
+    // call `inode_sync`, write the inode to disk using API provided by `BlockCache`.
+    // making sure the process is atomic.
+    cache->begin_op(ctx);
+    u32 *num_inodes =  &sblock->num_inodes;
+    *num_inodes += 1;
+
+
+    cache->end_op(ctx);
+
 
     PANIC("failed to allocate inode on disk");
 }
@@ -79,6 +89,10 @@ static void inode_unlock(Inode *inode) {
 // see `inode.h`.
 static void inode_sync(OpContext *ctx, Inode *inode, bool do_write) {
     // TODO
+    // sync the inode to disk.
+    // if `do_write` is true, write the inode to disk.
+    // other wise, sync disk inode to memory.
+
 }
 
 // see `inode.h`.
@@ -87,6 +101,9 @@ static Inode *inode_get(usize inode_no) {
     assert(inode_no < sblock->num_inodes);
 
     // TODO
+    // check if the inode is in memory.
+    // if yes, return the inode.
+    // if no, load the inode from disk.
 
     return NULL;
 }
@@ -96,6 +113,9 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
     InodeEntry *entry = &inode->entry;
 
     // TODO
+    // clear the inode in memory.
+    // write the inode to disk, using method `inode_sync`.
+
 }
 
 // see `inode.h`.
@@ -109,6 +129,7 @@ static Inode *inode_share(Inode *inode) {
 // see `inode.h`.
 static void inode_put(OpContext *ctx, Inode *inode) {
     // TODO
+    
 }
 
 // this function is private to inode layer, because it can allocate block

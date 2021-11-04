@@ -14,17 +14,17 @@ extern void trap_return();
  * If found, change state to EMBRYO and initialize
  * state (allocate stack, clear trapframe, set context for switch...)
  * required to run in the kernel. Otherwise return 0.
- * Step 1 (TODO): Call `alloc_pcb()` to get a pcb.
- * Step 2 (TODO): Set the state to `EMBRYO`.
- * Step 3 (TODO): Allocate memory for the kernel stack of the process.
- * Step 4 (TODO): Reserve regions for trapframe and context in the kernel stack.
- * Step 5 (TODO): Set p->tf and p->context to the start of these regions.
- * Step 6 (TODO): Clear trapframe.
- * Step 7 (TODO): Set the context to work with `swtch()`, `forkret()` and `trap_return()`.
+ * Step 1 (): Call `alloc_pcb()` to get a pcb.
+ * Step 2 (): Set the state to `EMBRYO`.
+ * Step 3 (): Allocate memory for the kernel stack of the process.
+ * Step 4 (): Reserve regions for trapframe and context in the kernel stack.
+ * Step 5 (): Set p->tf and p->context to the start of these regions.
+ * Step 6 (): Clear trapframe.
+ * Step 7 (): Set the context to work with `swtch()`, `forkret()` and `trap_return()`.
  */
 static struct proc *alloc_proc() {
     struct proc *p;
-    /* TODO: Lab3 Process */
+    /* : Lab3 Process */
     // Function alloc_pcb set PCB state from unused to EMBRO.
     p = alloc_pcb();
     char* stack = kalloc();
@@ -53,11 +53,11 @@ static struct proc *alloc_proc() {
 /*
  * Set up first user process(Only used once).
  * Step 1: Allocate a configured proc struct by `alloc_proc()`.
- * Step 2 (TODO): Allocate memory for storing the code of init process.
- * Step 3 (TODO): Copy the code (ranging icode to eicode) to memory.
- * Step 4 (TODO): Map any va to this page.
- * Step 5 (TODO): Set the address after eret to this va.
- * Step 6 (TODO): Set proc->sz.
+ * Step 2 (): Allocate memory for storing the code of init process.
+ * Step 3 (): Copy the code (ranging icode to eicode) to memory.
+ * Step 4 (): Map any va to this page.
+ * Step 5 (): Set the address after eret to this va.
+ * Step 6 (): Set proc->sz.
  */
 void spawn_init_process() {
     struct proc *p;
@@ -91,7 +91,7 @@ void spawn_init_process() {
  * A fork child will first swtch here, and then "return" to user space.
  */
 void forkret() {
-	/* TODO: Lab3 Process */
+	/* : Lab3 Process */
     release_proc_lock();
 }
 
@@ -101,7 +101,7 @@ void forkret() {
  * until its parent calls wait() to find out it exited.
  */
 void exit() {
-    /* TODO: Lab3 Process */
+    /* : Lab3 Process */
     // acquire_proc_lock();
     proc * p = thiscpu() -> proc;
     p -> state = ZOMBIE;

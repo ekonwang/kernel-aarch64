@@ -34,16 +34,16 @@ void trap_global_handler(Trapframe *frame) {
 			 * Note: this function returns void,
 			 * where to record the return value?
 			 */
-			/* TODO: Lab3 Syscall */
+			/* : Lab3 Syscall */
             frame -> r0 = syscall_dispatch(frame);
-            // TODO: warn if `iss` is not zero.
+            // : warn if `iss` is not zero.
             if(iss)
                 PANIC("iss should not be zero");
             
         } break;
 
         default: {
-            // TODO: should exit current process here.
+            // : should exit current process here.
             exit(1);
         }
     }

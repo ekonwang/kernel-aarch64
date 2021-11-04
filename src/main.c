@@ -46,13 +46,13 @@ void init_system_per_cpu() {
     set_clock_handler(hello);
     init_trap();
 
-    /* TODO: Lab3 uncomment to test interrupt */
+    /* : Lab3 uncomment to test interrupt */
     // test_kernel_interrupt();
     init_cpu(&simple_scheduler);
 }
 
 NORETURN void main() {
-	/* TODO: Lab1 print */
+	/* : Lab1 print */
     init_system_once();
     wait_spinlock(&init_lock);
 
