@@ -78,7 +78,8 @@ static void init_inode(Inode *inode) {
 // to know where the entry is, use `get_entry` method.
 // and then we can know the inode's type, and if it's available for allcocating new inode.
 // inode in memory is always newest copy of inode on disk, waiting to be written back to disk.
-//
+// 
+// 0. Must no hold any lock of inode or list.
 // 1. acquire block.
 // 2. read inodeEntry.
 // 3. check if inodeEntry is valid.
@@ -166,14 +167,15 @@ static void inode_sync(OpContext *ctx, Inode *inode, bool do_write) {
     // copy and synchronization.
     if (inode->valid == false) {
         // copy entry on disk to in-memory inode.
+        // now in-memory inode is valid.
         memcpy(im_entry, sd_entry, sizeof(InodeEntry));
+        inode->valid = true;
     } else if (inode->valid == true && do_write) {
         // synchronize data to disk.
         memcpy(sd_entry, im_entry, sizeof(InodeEntry));
         cache->sync(ctx, block);
     } else { 
-        // else PANIC. 
-        PANIC("inode_sync : inode true and do_write == false.\n");
+        // else do nothing. 
     }
     // do not forget to release the block.
     cache->release(block);
@@ -183,7 +185,7 @@ static void inode_sync(OpContext *ctx, Inode *inode, bool do_write) {
 
 //
 // see `inode.h`.
-// 0. Holding `inode -> lock` and `list -> lock`.
+// 0. Need hold `inode -> lock` and `list -> lock`.
 // 1. find corresponding inode in memory.
 // 2. if no found in list or inode is invalid, try to load it from disk.
 // 3. if corresponding inode is unvalid, return NULL to caller.
@@ -231,7 +233,7 @@ static Inode *inode_get(usize inode_no) {
 
 //
 // see `inode.h`.
-// 0. Holding `inode -> lock` and `list -> lock`.
+// 0. MUST NOT Hold `inode -> lock`, NEED aquire `list -> lock`.
 // 1. delete corresponding inode on disk (make it unvalid).
 // 2. free corresponding inode in memory (delete it from list using ``).
 // 3. how to clear the data blocks on disk?
@@ -239,10 +241,39 @@ static Inode *inode_get(usize inode_no) {
 static void inode_clear(OpContext *ctx, Inode *inode) {
     InodeEntry *entry = &inode->entry;
 
-    // TODO
-    // clear the inode in memory.
-    // write the inode to disk, using method `inode_sync`.
+    // synchronize data from disk.
+    inode_sync(ctx, inode, false);
 
+    cache->begin_op(ctx);
+    // initialization.
+    InodeEntry *im_entry = &inode->entry;
+    u32 *addrs = &im_entry->addrs;
+    usize i = 0;
+    // try to free all data blocks on entry.
+    // first try to free the direct data block.
+    for(; i<INODE_NUM_DIRECT; i++) {
+        // if there is allocated data block, free it.
+        if (addrs[i]) 
+            cache->free(ctx, addrs[i]);
+    }
+    // second try to free the indirect data block.
+    if (im_entry->indirect) {
+        Block *block = cache->acquire(im_entry->indirect);
+        for (i=0; i<INODE_NUM_INDIRECT; i++) {
+            u32 *block_no_addr = (u32 *)block + i;
+            // if there is allocated data block in indirect block, free it.
+            if (*block_no_addr) {
+                cache->free(ctx, *block_no_addr);
+            }
+        }
+    }
+
+    // now all contents has been discard.
+    // clear block_nos, synchronize, and end the atomic operation.
+    memset(im_entry, 0, sizeof(InodeEntry));
+    cache->end_op(ctx);
+    // finally synchronize entry to sd.
+    inode_sync(ctx, inode, true);
 }
 
 //
@@ -263,8 +294,30 @@ static Inode *inode_share(Inode *inode) {
 // 2. if reference count is zero, clear the inode, call `inode_clear`.
 //
 static void inode_put(OpContext *ctx, Inode *inode) {
-    // TODO
-    
+    // aquire inode's lock
+    acquire_spinlock(&inode->lock);
+
+    // decrease the reference count of inode.
+    decrement_rc(&inode->rc);
+
+    // if ref number > 0, return.
+    if (inode->rc.count) {
+        release_spinlock(&inode->lock);
+        return;
+    }
+
+    // if entry.num_links == 0, destroy inode both in memory and disk.
+    if (inode->entry.num_links == 0) {
+        // free data block of the inode first.
+        inode_clear(ctx, inode);
+        memset(&inode->entry, 0, sizeof(InodeEntry));
+        // make entry on disk all-zero.
+        inode_sync(ctx, inode, true);
+    }
+
+    // if entry.num_links > 0, only destroy inode in memory.
+    detach_from_list(&inode->node);
+    free_object(inode);
 }
 
 // this function is private to inode layer, because it can allocate block
@@ -277,32 +330,102 @@ static void inode_put(OpContext *ctx, Inode *inode) {
 //
 // NOTE: caller must hold the lock of `inode`.
 //
-// 0. caller holding lock, so `inode_map` does not hold any lock. Assuming offset means position of byte (counting from 0).
+// 0. caller holding lock, so `inode_map` does not hold inode lock. 
+//    `inode_map` does not hold atomic lock (`begin_op` and `end_op`).
+//    its caller `inode_write` holds the atomic operation lock.
 // 1. check if offset is over or equal to INODE_MAX_LENGTH.
 // 2. check if offset byte in direct block.
 // 3. check if offset byte in indirect block.
 // 4. if correspongding block is not allocated, allocate it.
+// 
 static usize inode_map(OpContext *ctx, Inode *inode, usize offset, bool *modified) {
     InodeEntry *entry = &inode->entry;
+    assert(offset < INODE_MAX_BYTES);
+    usize block_index = offset / BLOCK_SIZE, block_no = 0;
+    u32 *block_entry = NULL;
 
-    // TODO
+    // if block_index is at direct area.
+    if (block_index < INODE_NUM_DIRECT) {
+        block_entry = &entry->addrs[block_index];
+    }
 
+    // else if block_index is at indirect area.
+    else {
+        block_index -= INODE_NUM_DIRECT;
+        // if indirect entry is not used, initialize it.
+        if (entry->indirect==0) {
+            entry->indirect = cache->alloc(ctx);
+            *modified = true;
+        }
+        IndirectBlock *block = (IndirectBlock *)cache->acquire(entry->indirect);
+        block_entry = &block->addrs[block_index];
+    }
 
-    return 0;
+    if (*block_entry) 
+        block_no = *block_entry;
+    // if this entry is not allocated.
+    else {
+        *block_entry = cache->alloc(ctx);
+        block_no = *block_entry;
+        *modified = true;
+    }
+
+    // if *modified == True, sync to disk.
+    if (*modified) 
+        inode_sync(ctx, inode, true);
+    return block_no;
+}
+
+// helper function for `inode_read`.
+static usize inode_map2(Inode *inode, usize offset) {
+    InodeEntry *entry = &inode->entry;
+    assert(offset < INODE_MAX_BYTES);
+    usize block_index = offset / BLOCK_SIZE, block_no = 0;
+    
+    // if block_index is at direct area.
+    if (block_index < INODE_NUM_DIRECT) {
+        assert(entry->addrs[block_index]);
+        return entry->addrs[block_index];
+    }
+
+    // else if block_index is at indirect area.
+    else {
+        block_index -= INODE_NUM_DIRECT;
+        assert(entry->indirect);
+        IndirectBlock *block = (IndirectBlock *)entry->indirect;
+        assert(block->addrs[block_index]);
+        return block->addrs[block_index];
+    }
 }
 
 // see `inode.h`.
+// 0. not holding lock of inode.
 // 1. call cache's `acquire` to access the block.
 // 2. copy corresponding data from block to dest.
 // 3. do forget to `release` the block every time call `acquire`.
 static void inode_read(Inode *inode, u8 *dest, usize offset, usize count) {
     InodeEntry *entry = &inode->entry;
     usize end = offset + count;
-    assert(offset <= entry->num_bytes);
+    assert(offset < entry->num_bytes);
     assert(end <= entry->num_bytes);
     assert(offset <= end);
 
-    // TODO
+    usize i = round_down(offset, BLOCK_SIZE);
+    usize start, term;
+    while(i <= end) {
+        // i: data block_no.
+        // copydata start from start, ends at term in this block.
+        start = MAX(i, offset)-i;
+        term = MIN(i+BLOCK_SIZE, end)-i;
+        // begin copy.
+        usize block_no = inode_map2(inode, i);
+        Block *block = cache->acquire(block_no);
+        memcpy(dest, (u8 *)block + start, term-start);
+        cache->release(block);
+        // update.
+        dest += term-start;
+        i += BLOCK_SIZE;
+    }
 }
 
 // see `inode.h`.
@@ -317,16 +440,37 @@ static void inode_write(OpContext *ctx, Inode *inode, u8 *src, usize offset, usi
     assert(end <= INODE_MAX_BYTES);
     assert(offset <= end);
 
-    // TODO
+    // begin atomic operation.
+    cache->begin_op(ctx);
+    bool modify;
+    usize i = round_down(offset, BLOCK_SIZE);
+    usize start, term;
+    while(i <= end) {
+        // i: data block_no.
+        // copydata start from start, ends at term in this block.
+        start = MAX(i, offset)-i;
+        term = MIN(i+BLOCK_SIZE, end)-i;
+
+        // begin mapping (may change inode on disk).
+        usize block_no = inode_map(ctx, inode, i, &modify);
+        
+        // begin copying to disk.
+        Block *block = cache->acquire(block_no);
+        memcpy((u8 *)block + start, src, term-start);
+        cache->release(block);
+        // update.
+        src += term-start;
+        i += BLOCK_SIZE;
+    }
+    cache->end_op(ctx);
 }
 
 //
 // see `inode.h`.
 // caller holding the lock so `inode_lookup` does not hold any lock.
 // 1. check if type of inode is INODE_DIR.
-// 2. check if `name` is empty.
-// 3. check if `name` is too long.
-// 4. check if `name` in this directory.
+// 2. find the position of the entry with name.
+// 3. if no found, return 0 indicating no entry matches with it.
 // 
 static usize inode_lookup(Inode *inode, const char *name, usize *index) {
     InodeEntry *entry = &inode->entry;
@@ -339,12 +483,10 @@ static usize inode_lookup(Inode *inode, const char *name, usize *index) {
 
 //
 // see `inode.h`.
-// caller holding the lock so `inode_lookup` does not hold any lock.
-// 1. check if type of inode is INODE_DIR.
-// 2. check if space is enough for new entry.
-// 3. check if `name` is too long.
-// 4. after insertion, update inode's num_bytes.
-// 5. return index of entry on the inode.
+// 0. caller holding the lock so `inode_lookup` does not hold any lock.
+// 1. find corresponding position for new entry.
+// 2. copy and increase num_bytes of dir inode entry.
+// 3. increase num_links of the corresponding inode.
 // 
 static usize inode_insert(OpContext *ctx, Inode *inode, const char *name, usize inode_no) {
     InodeEntry *entry = &inode->entry;
@@ -356,6 +498,11 @@ static usize inode_insert(OpContext *ctx, Inode *inode, const char *name, usize 
 }
 
 // see `inode.h`.
+// 0. `inode_remove` aquire no lock of the inode.
+// 1. find the entry.
+// 2. remove entry in dir inode cause opposite effects on inode entry with `inode_insert`.
+// 3. reduce num_links of the corresponding inode.
+//
 static void inode_remove(OpContext *ctx, Inode *inode, usize index) {
     InodeEntry *entry = &inode->entry;
     assert(entry->type == INODE_DIRECTORY);
