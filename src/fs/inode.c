@@ -572,7 +572,6 @@ static usize inode_insert(OpContext *ctx, Inode *inode, const char *name, usize 
     assert(entry->num_bytes < INODE_MAX_BYTES);
     usize numbytes = entry->num_bytes;
 
-    Inode *inode = inode_get(inode_no);
     
     // initialize an entry.
     DirEntry dir_entry;
