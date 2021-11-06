@@ -110,10 +110,6 @@ static usize inode_alloc(OpContext *ctx, InodeType type) {
                     // make it valid.
                     entry->type = INODE_REGULAR;
                     cache->sync(ctx, block);
-                    // apply and initialize new inode in memory.
-                    // apply -> init -> merge_list.
-                    // does it needed in this function?
-                    // TODO : if we need to initialize new inode in memory?
                     break;
                 }
             }
@@ -370,9 +366,6 @@ static usize inode_map(OpContext *ctx, Inode *inode, usize offset, bool *modifie
         *modified = true;
     }
 
-    // if *modified == True, sync to disk.
-    if (*modified) 
-        inode_sync(ctx, inode, true);
     return block_no;
 }
 
@@ -458,10 +451,17 @@ static void inode_write(OpContext *ctx, Inode *inode, u8 *src, usize offset, usi
         Block *block = cache->acquire(block_no);
         memcpy((u8 *)block + start, src, term-start);
         cache->release(block);
-        // update.
+        // update terminal and start.
         src += term-start;
         i += BLOCK_SIZE;
     }
+    
+    // update number of bytes of the entry.
+    if (modify || entry->num_bytes < end) {
+        entry->num_bytes = MAX(end, entry->num_bytes);
+        inode_sync(ctx, inode, true);
+    }
+    // end atomic operation.
     cache->end_op(ctx);
 }
 
@@ -475,9 +475,40 @@ static void inode_write(OpContext *ctx, Inode *inode, u8 *src, usize offset, usi
 static usize inode_lookup(Inode *inode, const char *name, usize *index) {
     InodeEntry *entry = &inode->entry;
     assert(entry->type == INODE_DIRECTORY);
+    // make sure data is stored uniformly in INODE_DIR inode.
+    assert(entry->num_bytes % sizeof(DirEntry) == 0);
+    // make sure name is not so long.
+    assert(strlen(name) < FILE_NAME_MAX_LENGTH);
+    
+    usize len = 0;
+    usize block_index = 0;
+    usize name_length = strlen(name);
+    char buffer[BLOCK_SIZE];
+    while(block_index <= entry->num_bytes) {
+        len = MIN(block_index+BLOCK_SIZE, entry->num_bytes) - block_index;
+        // call `inode_read` to access the content.
+        inode_read(inode, buffer, block_index, len);
+        // now the buffer has the copy of content of block.
 
-    // TODO
+        // look up in the buffer :
+        for (usize in_block = 0; in_block < len; in_block += sizeof(DirEntry)) {
+            assert(in_block+block_index < entry->num_bytes);
+            DirEntry *dir_entry = (DirEntry *)(buffer + in_block);
+            char *this_name = dir_entry->name;
+            // '\0' position must matches. if matches.
+            if (!memcmp(name, this_name, name_length+1)) {
+                // `*index` assigned with direntry index.
+                // return inode_no.
+                // noted that inode_lookup only return FIRST match.
+                *index = block_index + in_block;
+                return dir_entry->inode_no;
+            }
+        }
+        // update block_index
+        block_index += BLOCK_SIZE;
+    }
 
+    // if no match found, return zero to caller.
     return 0;
 }
 
@@ -491,10 +522,19 @@ static usize inode_lookup(Inode *inode, const char *name, usize *index) {
 static usize inode_insert(OpContext *ctx, Inode *inode, const char *name, usize inode_no) {
     InodeEntry *entry = &inode->entry;
     assert(entry->type == INODE_DIRECTORY);
+    assert(entry->num_bytes % sizeof(DirEntry) == 0);
+    assert(entry->num_bytes < INODE_MAX_BYTES);
+    usize numbytes = entry->num_bytes;
 
-    // TODO
+    Inode *inode = inode_get(inode_no);
+    // initialize an entry.
+    DirEntry dir_entry;
+    dir_entry.inode_no = inode_no;
+    strncpy(&dir_entry.name, name, FILE_NAME_MAX_LENGTH);
+    // write.
+    inode_write(ctx, inode, (u8 *)&dir_entry, numbytes, sizeof(DirEntry));
 
-    return 0;
+    return numbytes;
 }
 
 // see `inode.h`.
@@ -505,9 +545,23 @@ static usize inode_insert(OpContext *ctx, Inode *inode, const char *name, usize 
 //
 static void inode_remove(OpContext *ctx, Inode *inode, usize index) {
     InodeEntry *entry = &inode->entry;
+    // uniform check.
     assert(entry->type == INODE_DIRECTORY);
+    assert(index < INODE_MAX_BYTES);
+    assert(index % sizeof(DirEntry) == 0);
+    
+    // the area of the inode has not been used yet.
+    if (index >= entry->num_bytes) 
+        return;
 
-    // TODO
+    // begin write all-zero to corresponding area.
+    DirEntry dir_entry;
+    memset(&dir_entry, 0, sizeof(DirEntry));
+    inode_write(ctx, inode, (u8 *)&dir_entry, index, sizeof(DirEntry));
+
+    // if neccesary, edit num_bytes.
+    if (index + sizeof(DirEntry) == entry->num_bytes)
+        entry->num_bytes = index;
 }
 
 InodeTree inodes = {
