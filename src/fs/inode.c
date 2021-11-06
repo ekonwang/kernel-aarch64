@@ -262,8 +262,10 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
     // first try to free the direct data block.
     for(; i<INODE_NUM_DIRECT; i++) {
         // if there is allocated data block, free it.
-        if (addrs[i]) 
+        if (addrs[i]) {
             cache->free(ctx, addrs[i]);
+            addrs[i] = (u32)0;
+        }
     }
 
     // second try to free the indirect data block.
@@ -281,11 +283,10 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
         // unlock the indirect block and free it.
         cache->release(block);
         cache->free(ctx, im_entry->indirect);
+        entry->indirect = (u32)0;
     }
 
     // now all contents has been discard.
-    // clear block_nos, synchronize, and end the atomic operation.
-    memset(im_entry, 0, sizeof(InodeEntry));
 
     // end atomic operation.
     cache->end_op(ctx);
