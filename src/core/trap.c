@@ -21,7 +21,7 @@ void trap_global_handler(Trapframe *frame) {
     switch (ec) {
         case ESR_EC_UNKNOWN: {
             if (ir)
-                PANIC("unknown error");
+                PANIC("esr_ec unknown error");
             else
                 interrupt_global_handler();
         } break;
@@ -34,15 +34,17 @@ void trap_global_handler(Trapframe *frame) {
 			 * Note: this function returns void,
 			 * where to record the return value?
 			 */
-            /* TODO: Lab3 Syscall */
-
-            // TODO: warn if `iss` is not zero.
-            (void)iss;
+			/* : Lab3 Syscall */
+            frame -> r0 = syscall_dispatch(frame);
+            // : warn if `iss` is not zero.
+            if(iss)
+                PANIC("iss should not be zero");
+            
         } break;
 
         default: {
-            // TODO: should exit current process here.
-            // exit(1);
+            // : should exit current process here.
+            exit(1);
         }
     }
     /*
