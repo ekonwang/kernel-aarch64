@@ -437,7 +437,7 @@ static void inode_read(Inode *inode, u8 *dest, usize offset, usize count) {
 
     usize i = round_down(offset, BLOCK_SIZE);
     usize start, term;
-    while(i <= end) {
+    while(i < end) {
         // i: data block_no.
         // copydata start from start, ends at term in this block.
         start = MAX(i, offset)-i;
