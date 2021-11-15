@@ -542,7 +542,8 @@ static usize inode_lookup(Inode *inode, const char *name, usize *index) {
                 // `*index` assigned with direntry index.
                 // return inode_no.
                 // noted that inode_lookup only return FIRST match.
-                *index = block_index + in_block;
+                if (index != NULL)
+                    *index = block_index + in_block;
                 return dir_entry->inode_no;
             }
         }
