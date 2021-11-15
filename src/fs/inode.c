@@ -91,32 +91,31 @@ static void init_inode(Inode *inode) {
 // 
 static usize inode_alloc(OpContext *ctx, InodeType type) {
     assert(type != INODE_INVALID);
-
     usize i = 0, j;
     usize inode_number = 0, block_number, check_number;
     
     for(;; i += INODE_PER_BLOCK) {
         if (i >= sblock->num_inodes) break;
+        
+        // find the right block.
         block_number = to_block_no(i);
-        // acquire block.
+        
         Block * block = cache->acquire(block_number);
-
         for(j = 0; j < INODE_PER_BLOCK; j++) {
             check_number = i+j;
-            if (check_number > 0 && check_number < sblock->num_inodes) {
+            if (check_number > 1 && check_number < sblock->num_inodes) {
                 InodeEntry * entry = get_entry(block, check_number);
                 if (entry->type == INODE_INVALID) {
                     inode_number = check_number;
-                    // make it valid, very neccesary in case it is used again.
+                    memset(entry, 0, sizeof(InodeEntry));
                     entry->type = type;
                     cache->sync(ctx, block);
                     break;
                 }
             }
         }
-        // release block.
         cache->release(block);
-        // inode is found.
+
         if (inode_number) break;
     }
 
@@ -210,13 +209,19 @@ static Inode *inode_get(usize inode_no) {
 
         // do some normal initialization, DO NOT FORGET to LOCK object !!!
         init_inode(inode);
+
         // aquire inode lock since we edit values on it && no caller holds the lock.
         acquire_spinlock(&inode->lock);
+
         // inode_no & reference count edit.
         inode->inode_no = inode_no;
+
         // when inode_no == root_dir == 1
-        if (inode_no == 1) 
+        if (inode_no == 1) {
             inode->entry.type = INODE_DIRECTORY;
+            inode->valid = true;
+        }
+
         increment_rc(&inode->rc);
 
         // aquire list lock since we want to edit the list.
@@ -316,7 +321,7 @@ static void inode_put(OpContext *ctx, Inode *inode) {
     }
 
     // if entry.num_links == 0, destroy inode both in memory and disk.
-    if (inode->entry.num_links == 0) {
+    if (inode->entry.num_links == 0 && inode->inode_no != 1) {
         // free data block of the inode first.
         inode_clear(ctx, inode);
 
