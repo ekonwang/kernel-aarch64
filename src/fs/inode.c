@@ -107,7 +107,7 @@ static usize inode_alloc(OpContext *ctx, InodeType type) {
                 if (entry->type == INODE_INVALID) {
                     inode_number = check_number;
                     // make it valid, very neccesary in case it is used again.
-                    entry->type = INODE_REGULAR;
+                    entry->type = type;
                     cache->sync(ctx, block);
                     break;
                 }
