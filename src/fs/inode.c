@@ -417,7 +417,7 @@ static usize inode_map2(Inode *inode, usize offset) {
     else {
         block_index -= INODE_NUM_DIRECT;
         assert(entry->indirect);
-        IndirectBlock *block = (IndirectBlock *)entry->indirect;
+        IndirectBlock *block = (IndirectBlock *)cache->acquire(entry->indirect);
         assert(block->addrs[block_index]);
         return block->addrs[block_index];
     }
