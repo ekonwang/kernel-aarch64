@@ -24,6 +24,7 @@ static INLINE Inode *get_inode_inlist(usize inode_no) {
         // corresponding inode is found in list.
         if (inode->inode_no == inode_no)
             return inode;
+        current = current->next;
     }
     return NULL;
 }
