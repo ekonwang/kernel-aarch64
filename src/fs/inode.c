@@ -418,8 +418,10 @@ static usize inode_map2(Inode *inode, usize offset) {
         block_index -= INODE_NUM_DIRECT;
         assert(entry->indirect);
         IndirectBlock *block = (IndirectBlock *)cache->acquire(entry->indirect);
-        assert(block->addrs[block_index]);
-        return block->addrs[block_index];
+        if (block->addrs[block_index]);
+        usize block_no = block->addrs[block_index];
+        cache->release(block);
+        return block_no;
     }
 }
 
