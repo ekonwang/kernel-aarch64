@@ -215,11 +215,11 @@ static Inode *inode_get(usize inode_no) {
 
         // inode_no & reference count edit.
         inode->inode_no = inode_no;
+        inode_sync(NULL, inode, false);
 
         // when inode_no == root_dir == 1
         if (inode_no == 1) {
             inode->entry.type = INODE_DIRECTORY;
-            inode->valid = true;
         }
 
         increment_rc(&inode->rc);
