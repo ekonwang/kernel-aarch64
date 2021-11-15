@@ -93,8 +93,7 @@ static usize inode_alloc(OpContext *ctx, InodeType type) {
 
     usize i = 0, j;
     usize inode_number = 0, block_number, check_number;
-    // begin atomic operation.
-    cache->begin_op(ctx);
+    
     for(;; i += INODE_PER_BLOCK) {
         if (i >= sblock->num_inodes) break;
         block_number = to_block_no(i);
@@ -119,8 +118,6 @@ static usize inode_alloc(OpContext *ctx, InodeType type) {
         // inode is found.
         if (inode_number) break;
     }
-    // end atomic operation on sd.
-    cache->end_op(ctx);
 
     if (inode_number) return inode_number;
     else PANIC("failed to allocate inode on disk");
@@ -147,7 +144,6 @@ static void inode_unlock(Inode *inode) {
 // 2. else if `do_write` == False, and inodeEntry is unvalid, write from disk to memory.
 // 
 static void inode_sync(OpContext *ctx, Inode *inode, bool do_write) {
-    cache->begin_op(ctx);
     // some initliazation and neccessary condition check.
     InodeEntry *im_entry = &inode->entry;
     usize inode_number = inode->inode_no;
@@ -177,9 +173,6 @@ static void inode_sync(OpContext *ctx, Inode *inode, bool do_write) {
 
     // do not forget to release the block.
     cache->release(block);
-
-    // do not forget to end atomic operation.
-    cache->end_op(ctx);
 }
 
 //
@@ -250,9 +243,6 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
     if (inode->valid == false);
         inode_sync(ctx, inode, false);
 
-    // begin atomic operation.
-    cache->begin_op(ctx);
-
     // initialization.
     InodeEntry *im_entry = &inode->entry;
     u32 *addrs = &im_entry->addrs;
@@ -287,9 +277,6 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
     }
 
     // now all contents has been discard.
-
-    // end atomic operation.
-    cache->end_op(ctx);
 
     // finally synchronize entry to sd.
     inode_sync(ctx, inode, true);
@@ -464,9 +451,6 @@ static void inode_write(OpContext *ctx, Inode *inode, u8 *src, usize offset, usi
     assert(end <= INODE_MAX_BYTES);
     assert(offset <= end);
 
-    // begin atomic operation.
-    cache->begin_op(ctx);
-
     // define some values.
     bool modify;
     usize i = round_down(offset, BLOCK_SIZE);
@@ -497,9 +481,6 @@ static void inode_write(OpContext *ctx, Inode *inode, u8 *src, usize offset, usi
         entry->num_bytes = MAX(end, entry->num_bytes);
         inode_sync(ctx, inode, true);
     }
-
-    // end atomic operation.
-    cache->end_op(ctx);
 }
 
 //
