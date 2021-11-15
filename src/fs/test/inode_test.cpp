@@ -107,7 +107,7 @@ int test_touch() {
         mock.fence();
         assert_eq(mock.count_inodes(), i);
     }
-
+    PAUSE;
     usize n = mock.num_inodes - 1;
     for (usize i = 2; i < mock.num_inodes; i += 2, n--) {
         mock.begin_op(ctx);
