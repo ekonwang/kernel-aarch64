@@ -184,6 +184,7 @@ static void inode_sync(OpContext *ctx, Inode *inode, bool do_write) {
 // 3. if corresponding inode is unvalid, return NULL to caller.
 // 4. `inode_get` will increase the reference count of inode.
 //
+
 static Inode *inode_get(usize inode_no) {
     assert(inode_no > 0);
     assert(inode_no < sblock->num_inodes);
@@ -220,6 +221,7 @@ static Inode *inode_get(usize inode_no) {
         merge_list(&head, &inode->node);
         release_spinlock(&lock);
 
+
         // release lock of inode.
         release_spinlock(&inode->lock);
     }
@@ -240,10 +242,6 @@ static Inode *inode_get(usize inode_no) {
 static void inode_clear(OpContext *ctx, Inode *inode) {
     InodeEntry *entry = &inode->entry;
 
-    // synchronize data from disk if in-memory has not synchronized before.
-    if (inode->valid == false);
-        inode_sync(ctx, inode, false);
-
     // initialization.
     InodeEntry *im_entry = &inode->entry;
     u32 *addrs = &im_entry->addrs;
@@ -254,13 +252,14 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
     for(; i<INODE_NUM_DIRECT; i++) {
         // if there is allocated data block, free it.
         if (addrs[i]) {
-            cache->free(ctx, addrs[i]);
+            if (inode->valid == true)
+                cache->free(ctx, addrs[i]);
             addrs[i] = (u32)0;
         }
     }
 
     // second try to free the indirect data block.
-    if (im_entry->indirect) {
+    if (im_entry->indirect && inode->valid == true) {
         Block *block = cache->acquire(im_entry->indirect);
         for (i=0; i<INODE_NUM_INDIRECT; i++) {
             u32 *block_no_addr = (u32 *)block + i;
@@ -274,8 +273,8 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
         // unlock the indirect block and free it.
         cache->release(block);
         cache->free(ctx, im_entry->indirect);
-        entry->indirect = (u32)0;
     }
+    entry->indirect = (u32)0;
 
     // now all contents has been discard.
 
