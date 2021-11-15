@@ -333,7 +333,12 @@ static void inode_put(OpContext *ctx, Inode *inode) {
     }
 
     // if entry.num_links > 0, only destroy inode in memory.
+    acquire_spinlock(&lock);
     detach_from_list(&inode->node);
+    release_spinlock(&lock);
+    
+    release_spinlock(&inode->lock);
+
     free_object(inode);
 }
 
