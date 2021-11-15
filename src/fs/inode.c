@@ -384,7 +384,7 @@ static usize inode_map(OpContext *ctx, Inode *inode, usize offset, bool *modifie
         // find corresponding entry position.
         IndirectBlock *block = (IndirectBlock *)cache->acquire(entry->indirect);
         block_entry = &block->addrs[block_index];
-        cache->release(entry->indirect);
+        cache->release(block);
     }
 
     // if entry is allocated before.
