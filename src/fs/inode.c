@@ -214,6 +214,9 @@ static Inode *inode_get(usize inode_no) {
         acquire_spinlock(&inode->lock);
         // inode_no & reference count edit.
         inode->inode_no = inode_no;
+        // when inode_no == root_dir == 1
+        if (inode_no == 1) 
+            inode->entry.type = INODE_DIRECTORY;
         increment_rc(&inode->rc);
 
         // aquire list lock since we want to edit the list.
