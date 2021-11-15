@@ -460,7 +460,7 @@ static void inode_write(OpContext *ctx, Inode *inode, u8 *src, usize offset, usi
     assert(offset <= end);
 
     // define some values.
-    bool modify;
+    bool modify = false;
     usize i = round_down(offset, BLOCK_SIZE);
     usize start, term;
 
