@@ -283,7 +283,7 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
         cache->free(ctx, im_entry->indirect);
     }
     entry->indirect = (u32)0;
-
+    entry->num_bytes = (u16)0;
     // now all contents has been discard.
 
     // finally synchronize entry to sd.
