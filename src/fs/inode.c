@@ -433,7 +433,7 @@ static usize inode_map2(Inode *inode, usize offset) {
 static void inode_read(Inode *inode, u8 *dest, usize offset, usize count) {
     InodeEntry *entry = &inode->entry;
     usize end = offset + count;
-    assert(offset < entry->num_bytes);
+    assert(offset <= entry->num_bytes);
     assert(end <= entry->num_bytes);
     assert(offset <= end);
 
