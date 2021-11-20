@@ -22,6 +22,7 @@ struct sched_op simple_op = {.scheduler = scheduler_simple,
 struct scheduler simple_scheduler = {.op = &simple_op};
 
 void swtch(struct context **, struct context *);
+void to_forkret();
 
 static void init_sched_simple(struct scheduler *this) {
     init_spinlock(&this->ptable.lock, "ptable");
