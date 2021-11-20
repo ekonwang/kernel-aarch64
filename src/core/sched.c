@@ -42,11 +42,37 @@ static void release_ptable_lock(struct scheduler *this) {
  * Pay attention to thiscpu() structure and locks.
  */
 void yield_scheduler(struct scheduler *this) {
-    // TODO
-}
+    if (this->parent) {
+        thiscpu()->scheduler = this->parent;
+        yield();
+    }
+}   
 
 NO_RETURN void scheduler_simple(struct scheduler *this) {
-    // TODO
+    int has_run;
+    while(1){
+        has_run = 0;
+        acquire_ptable_lock(this);
+        for (u64 i = 0; i < NPROC; i++) {
+            proc *p = &this->ptable.proc[i];
+            struct cpu *c = thiscpu();
+            if (p->state == RUNNABLE) {
+                has_run = 1;
+                p->state = RUNNING;
+                c->proc = p;
+                if (p->is_scheduler)
+                    c->scheduler = p;
+                release_ptable_lock(this);
+                swtch(&this->context[cpuid()], p->context);
+
+                break;
+            }
+        }
+        if (!has_run) {
+            release_ptable_lock(this);
+        }
+        yield_scheduler(this);
+    }
 }
 
 static void sched_simple(struct scheduler *this) {
