@@ -84,7 +84,17 @@ static void sched_simple(struct scheduler *this) {
 }
 
 static struct proc *alloc_pcb_simple(struct scheduler *this) {
-    // TODO
+    proc *p = NULL;
+    acquire_ptable_lock(this);
+    for (int i = 0; i < NPROC; i++) {
+        if (this->ptable.proc[i].state == UNUSED) {
+            p = &this->ptable.proc[i];
+            p->state=EMBRYO;
+            break;
+        }
+    }
+    release_ptable_lock(this);
+    return p;
 }
 
 #endif
