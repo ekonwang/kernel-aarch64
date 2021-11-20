@@ -76,7 +76,11 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
 }
 
 static void sched_simple(struct scheduler *this) {
-    // TODO
+    struct cpu *c = thiscpu();
+    proc * p = c->proc;
+    p->state = RUNNABLE;
+    c->proc = p->parent;
+    swtch(&p->context, c->scheduler->context[cpuid()]);
 }
 
 static struct proc *alloc_pcb_simple(struct scheduler *this) {
