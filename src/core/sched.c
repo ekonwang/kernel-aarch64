@@ -6,7 +6,7 @@
 
 #ifdef MULTI_SCHEDULER
 
-/* TODO: Lab6 Add more Scheduler Policies */
+/* Lab6 Add more Scheduler Policies */
 static void scheduler_simple(struct scheduler *this);
 static struct proc *alloc_pcb_simple(struct scheduler *this);
 static void sched_simple(struct scheduler *this);
