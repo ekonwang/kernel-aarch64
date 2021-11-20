@@ -41,19 +41,19 @@ static void release_ptable_lock(struct scheduler *this) {
  * Pay attention to thiscpu() structure and locks.
  */
 void yield_scheduler(struct scheduler *this) {
-
+    // TODO
 }
 
 NO_RETURN void scheduler_simple(struct scheduler *this) {
-    
+    // TODO
 }
 
 static void sched_simple(struct scheduler *this) {
-    
+    // TODO
 }
 
 static struct proc *alloc_pcb_simple(struct scheduler *this) {
-    
+    // TODO
 }
 
 #endif
