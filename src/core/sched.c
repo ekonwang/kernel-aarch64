@@ -60,8 +60,10 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
                 has_run = 1;
                 p->state = RUNNING;
                 c->proc = p;
-                if (p->is_scheduler)
+                if (p->is_scheduler) {
                     c->scheduler = p;
+                    p->context = ((container *)p->cont)->scheduler.context[cpuid()];
+                }
                 release_ptable_lock(this);
                 swtch(&this->context[cpuid()], p->context);
 
