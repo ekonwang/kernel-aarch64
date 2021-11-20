@@ -115,8 +115,10 @@ void exit() {
  * Switch to the scheduler of this proc.
  */
 void yield() {
-    /* TODO: lab6 container */
-
+    proc * p = thiscpu() -> proc;
+    p -> state = RUNNABLE;
+    sched();
+    printf("return from yield.\n");
 }
 
 /*
@@ -124,13 +126,15 @@ void yield() {
  * Reacquires lock when awakened.
  */
 void sleep(void *chan, SpinLock *lock) {
-    /* TODO: lab6 container */
-
+    proc *p = thiscpu() -> proc;
+    p -> state = SLEEPING;
+    sched();
+    printf("wake up.\n");
 }
 
 /* Wake up all processes sleeping on chan. */
 void wakeup(void *chan) {
-    /* TODO: lab6 container */
+    struct container *cont = NULL;
 
 }
 

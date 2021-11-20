@@ -37,8 +37,8 @@ struct context {
 };
 
 struct proc {
-    u64 sz;                 /* Size of process memory (bytes)          */
-    u64 *pgdir;             /* Page table                              */
+    u64 sz;                  /* Size of process memory (bytes)          */
+    u64 *pgdir;              /* Page table                              */
     char *kstack;            /* Bottom of kernel stack for this process */
     enum procstate state;    /* Process state                           */
     int pid;                 /* Process ID                              */
