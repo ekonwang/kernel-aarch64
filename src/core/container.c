@@ -86,7 +86,8 @@ void *alloc_resource(struct container *this, struct proc *p, resource_t resource
             PANIC("alloc_resource : could not allocate new pid.");
         release_spinlock(&this->lock);
         alloc_resource(this->parent, p, PID);
-        return &foundpid;
+        void *addr = &foundpid;
+        return addr;
     }
 }
 
