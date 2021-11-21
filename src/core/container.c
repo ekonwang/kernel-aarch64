@@ -32,8 +32,17 @@ static NO_RETURN void container_entry() {
  * Initialize some pointers.
  */
 struct container *alloc_container(bool root) {
-    /* TODO: lab6 container */
-	
+	container *cont = alloc_object(&arena);
+    memset(cont, 0, sizeof(container));
+    cont->scheduler.op = &simple_op;
+    cont->scheduler.cont = cont;
+    cont->scheduler.pid = 1;
+    init_spinlock(&cont->scheduler.ptable.lock, "ptable");
+    init_spinlock(&cont->lock, "container");
+    if (root)
+        return cont;
+    cont->p = alloc_pcb();
+    return cont;
 }
 
 /*
@@ -44,18 +53,7 @@ void init_container() {
     ArenaPageAllocator allocator = {.allocate = kalloc, .free = kfree};
     init_arena(&arena, sizeof(container), allocator);
     puts("init arena okay.");
-
-    root_container = alloc_object(&arena);
-    root_container->scheduler.op = &simple_op;
-    root_container->scheduler.cont = root_container;
-    root_container->scheduler.parent = NULL;
-    root_container->scheduler.pid = 1;
-    root_container->parent = NULL;
-    root_container->p = NULL;
-    init_spinlock(&root_container->scheduler.ptable.lock, "root_ptable");
-    init_spinlock(&root_container->lock, "root_container");
-    memset(&root_container->pmap, 0, sizeof(root_container->pmap));
-    memset(&root_container->scheduler.ptable, 0, sizeof(root_container->scheduler.ptable));
+    root_container = alloc_container(true);
 }
 
 /* 
