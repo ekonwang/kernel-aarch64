@@ -30,7 +30,7 @@ static struct proc *alloc_proc() {
     char* stack = kalloc();
     if(stack == NULL) 
         PANIC("Could not kalloc.\n");
-    acquire_proc_lock();
+    acquire_sched_lock();
     p -> kstack = stack;
     
     // init sp and trapframe.
@@ -44,7 +44,7 @@ static struct proc *alloc_proc() {
     p -> context = (struct context *)stack;
 
     p -> context -> r30 = (u64)trap_return;
-    release_proc_lock();
+    release_sched_lock();
 
     return p;
 }
@@ -65,7 +65,7 @@ void spawn_init_process() {
     PTEntriesPtr PagePtr;
     p = alloc_proc();
     
-    acquire_proc_lock();
+    acquire_sched_lock();
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
@@ -83,7 +83,7 @@ void spawn_init_process() {
     p -> sz = PAGE_SIZE;
     p -> context -> r30 = (u64)to_forkret;
 
-    release_proc_lock();
+    release_sched_lock();
 }
 
 /*
@@ -91,7 +91,6 @@ void spawn_init_process() {
  */
 void forkret() {
 	/* : Lab3 Process */
-    release_proc_lock();
 }
 
 /*
@@ -101,10 +100,10 @@ void forkret() {
  */
 void exit() {
     /* : Lab3 Process */
-    // acquire_proc_lock();
+    // acquire_sched_lock();
     proc * p = thiscpu() -> proc;
     p -> state = ZOMBIE;
-    // release_proc_lock();
+    // release_sched_lock();
     sched();
     PANIC("ERROR: ZOMBIE trying exit.");
 }
