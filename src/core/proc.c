@@ -80,7 +80,7 @@ void spawn_init_process() {
     }
     
     p -> state = RUNNABLE;
-    p -> sz = ROUNDUP(cpsize, PAGE_SIZE);
+    p -> sz = PAGE_SIZE;
     p -> context -> r30 = (u64)to_forkret;
 
     release_proc_lock();
@@ -142,7 +142,6 @@ void wakeup(void *chan) {
  */
 void add_loop_test(int times) {
     for (int i = 0; i < times; i++) {
-        /* TODO: lab6 container */
-
+        
     }
 }

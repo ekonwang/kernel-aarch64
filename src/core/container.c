@@ -17,8 +17,7 @@ extern void add_loop_test(int times);
  * Maintain thiscpu()->scheduler.
  */
 static NO_RETURN void container_entry() {
-    /* TODO: lab6 container */
-
+    thiscpu()->scheduler->op->scheduler(thiscpu()->scheduler);
 
 	/* container_entry should enter scheduler and should not return */
     PANIC("scheduler should not return");
@@ -41,7 +40,9 @@ struct container *alloc_container(bool root) {
     init_spinlock(&cont->lock, "container");
     if (root)
         return cont;
-    cont->p = alloc_pcb();
+    cont->p = alloc_proc();
+    for (int i = 0; i < NCPU; i++)
+        cont->scheduler.context[i]->r30 = (u64)container_entry;
     return cont;
 }
 
@@ -91,8 +92,9 @@ void *alloc_resource(struct container *this, struct proc *p, resource_t resource
  * Spawn a new process.
  */
 struct container *spawn_container(struct container *this, struct sched_op *op) {
-    /* TODO: lab6 container */
-
+    container *cont = alloc_container(false);
+    
+    return cont;
 }
 
 /*
