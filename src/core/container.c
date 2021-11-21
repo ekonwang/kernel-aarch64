@@ -40,7 +40,7 @@ struct container *alloc_container(bool root) {
     init_spinlock(&cont->lock, "container");
     if (root)
         return cont;
-    cont->p = alloc_proc();
+    cont->p = alloc_pcb();
     cont->p->is_scheduler = true;
     cont->p->cont = cont;
     for (int i = 0; i < NCPU; i++)
