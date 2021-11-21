@@ -130,9 +130,7 @@ void sleep(void *chan, SpinLock *lock) {
 
 /* Wake up all processes sleeping on chan. */
 void wakeup(void *chan) {
-    /* TODO */
-    struct container *cont = NULL;
-
+    struct container *cont = thiscpu()->scheduler;
 }
 
 /* 

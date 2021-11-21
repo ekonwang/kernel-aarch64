@@ -92,6 +92,7 @@ static struct proc *alloc_pcb_simple(struct scheduler *this) {
     for (int i = 0; i < NPROC; i++) {
         if (this->ptable.proc[i].state == UNUSED) {
             p = &this->ptable.proc[i];
+            memset(p, 0, sizeof(proc));
             p->state=EMBRYO;
             p->pid = *(int *)alloc_resource((container *)this->cont, p, PID);
             break;

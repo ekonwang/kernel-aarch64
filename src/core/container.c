@@ -41,6 +41,8 @@ struct container *alloc_container(bool root) {
     if (root)
         return cont;
     cont->p = alloc_proc();
+    cont->p->is_scheduler = true;
+    cont->p->cont = cont;
     for (int i = 0; i < NCPU; i++)
         cont->scheduler.context[i]->r30 = (u64)container_entry;
     return cont;
