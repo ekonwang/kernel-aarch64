@@ -41,8 +41,21 @@ struct container *alloc_container(bool root) {
  * Initialize the memory pool and root scheduler.
  */
 void init_container() {
-    /* TODO: lab6 container */
+    ArenaPageAllocator allocator = {.allocate = kalloc, .free = kfree};
+    init_arena(&arena, sizeof(container), allocator);
+    puts("init arena okay.");
 
+    root_container = alloc_object(&arena);
+    root_container->scheduler.op = &simple_op;
+    root_container->scheduler.cont = root_container;
+    root_container->scheduler.parent = NULL;
+    root_container->scheduler.pid = 1;
+    root_container->parent = NULL;
+    root_container->p = NULL;
+    init_spinlock(&root_container->scheduler.ptable.lock, "root_ptable");
+    init_spinlock(&root_container->lock, "root_container");
+    memset(&root_container->pmap, 0, sizeof(root_container->pmap));
+    memset(&root_container->scheduler.ptable, 0, sizeof(root_container->scheduler.ptable));
 }
 
 /* 
