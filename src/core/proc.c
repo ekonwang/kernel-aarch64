@@ -143,9 +143,8 @@ void add_loop_test(int times) {
         extern char loop_start[], loop_end[];
         u64 cpsize = loop_end - loop_start, tmpsize;
         PTEntriesPtr PagePtr;
-
-        acquire_sched_lock();
         p = alloc_pcb();
+        acquire_sched_lock();
         if ((p->pgdir = pgdir_init()) == NULL)
             PANIC("Could not initialize root pagetable");
         for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {

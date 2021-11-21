@@ -57,6 +57,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
             proc *p = &this->ptable.proc[i];
             struct cpu *c = thiscpu();
             if (p->state == RUNNABLE) {
+                printf("scheduler: process id (pid:%d) takes the cpu %d\n", p->pid, cpuid());
                 has_run = 1;
                 uvm_switch(p -> pgdir);
                 p->state = RUNNING;
