@@ -58,6 +58,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
             struct cpu *c = thiscpu();
             if (p->state == RUNNABLE) {
                 has_run = 1;
+                uvm_switch(p -> pgdir);
                 p->state = RUNNING;
                 c->proc = p;
                 if (p->is_scheduler) {
