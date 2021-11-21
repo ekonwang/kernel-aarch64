@@ -50,8 +50,28 @@ void init_container() {
  * You can add parameters if needed.
  */
 void *alloc_resource(struct container *this, struct proc *p, resource_t resource) {
-    /* TODO: lab6 container */
-
+    if (this == NULL || p == NULL) 
+        return NULL;
+    
+    if (resource == PID) 
+    {   
+        int foundpid = -1;
+        acquire_spinlock(&this->lock);
+        for (int i = 0; i < NPROC; i++) 
+        {
+            if (this->pmap[i].valid == false)
+            {
+                foundpid = this->scheduler.pid++;
+                this->pmap[i].valid == true;
+                this->pmap[i].pid_local = foundpid;
+                this->pmap[i].p = p;
+                break;
+            }
+        }
+        release_spinlock(&this->lock);
+        alloc_resource(this->parent, p, PID);
+        return &foundpid;
+    }
 }
 
 /* 

@@ -92,6 +92,7 @@ static struct proc *alloc_pcb_simple(struct scheduler *this) {
         if (this->ptable.proc[i].state == UNUSED) {
             p = &this->ptable.proc[i];
             p->state=EMBRYO;
+            p->pid = *(int *)alloc_resource((container *)this->cont, p, PID);
             break;
         }
     }

@@ -30,7 +30,6 @@ static struct proc *alloc_proc() {
     char* stack = kalloc();
     if(stack == NULL) 
         PANIC("Could not kalloc.\n");
-    
     acquire_proc_lock();
     p -> kstack = stack;
     
