@@ -141,6 +141,27 @@ void wakeup(void *chan) {
  */
 void add_loop_test(int times) {
     for (int i = 0; i < times; i++) {
-        
+        struct proc *p;
+        extern char loop_start[], loop_end[];
+        u64 cpsize = loop_end - loop_start, tmpsize;
+        PTEntriesPtr PagePtr;
+
+        acquire_sched_lock();
+        p = alloc_pcb();
+        if ((p->pgdir = pgdir_init()) == NULL)
+            PANIC("Could not initialize root pagetable");
+        for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
+            PagePtr = kalloc();
+            if (PagePtr == NULL) 
+                PANIC("kalloc failed");
+            tmpsize = (cpsize-vplace > PAGE_SIZE)? PAGE_SIZE : (cpsize-vplace);
+            uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
+            memcpy(PagePtr, loop_start + vplace, tmpsize);
+        }
+
+        p -> state = RUNNABLE;
+        p -> sz = PAGE_SIZE;
+        p -> context -> r30 = (u64)to_forkret;
+        release_sched_lock();
     }
 }
