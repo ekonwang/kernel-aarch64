@@ -66,6 +66,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
                     c->scheduler = p;
                     p->context = ((container *)p->cont)->scheduler.context[cpuid()];
                 }
+                printf("cpu %d: scheduler : %p\n", cpuid(), c->scheduler);
                 release_ptable_lock(this);
                 swtch(&this->context[cpuid()], p->context);
                 printf("scheduler: process id (pid:%d, state:%d) yields the cpu %d\n", p->pid, p->state, cpuid());
@@ -82,8 +83,10 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
 static void sched_simple(struct scheduler *this) {
     struct cpu *c = thiscpu();
     proc * p = c->proc;
+    printf("process %p at sched.\n", p);
     c->proc = p->parent;
     swtch(&p->context, c->scheduler->context[cpuid()]);
+    printf("process %p return from sched.\n", p);
 }
 
 static struct proc *alloc_pcb_simple(struct scheduler *this) {

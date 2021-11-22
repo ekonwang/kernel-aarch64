@@ -41,4 +41,4 @@ swtch:
     ldp x27, x28, [sp], #16
     ldp x29, x30, [sp], #16
 
-    eret
+    ret

@@ -24,26 +24,18 @@ extern void trap_return();
  */
 static struct proc *alloc_proc() {
     struct proc *p;
-    /* : Lab3 Process */
-    // Function alloc_pcb set PCB state from unused to EMBRO.
     p = alloc_pcb();
     char* stack = kalloc();
-    if(stack == NULL) 
-        PANIC("Could not kalloc.\n");
+
     acquire_sched_lock();
     p -> kstack = stack;
-    
-    // init sp and trapframe.
     stack += KSTACKSIZE;
     stack -= sizeof(*(p->tf));
     memset(stack, 0, sizeof(*(p->tf)));
     p -> tf = (Trapframe *)stack;
-
     stack -= sizeof(*(p->context));
     memset(stack, 0, sizeof(*(p->context)));
     p -> context = (struct context *)stack;
-
-    p -> context -> r30 = (u64)trap_return;
     release_sched_lock();
 
     return p;
@@ -70,6 +62,7 @@ void spawn_init_process() {
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
+    printf("Root page table of process p : %p\n", p->pgdir);
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
         PagePtr = kalloc();
         if (PagePtr == NULL) 
@@ -104,6 +97,7 @@ void exit() {
     proc * p = thiscpu() -> proc;
     p -> state = ZOMBIE;
     // release_sched_lock();
+    printf("process %p at exit.\n", p);
     sched();
     PANIC("ERROR: ZOMBIE trying exit.");
 }
