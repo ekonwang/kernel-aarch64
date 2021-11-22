@@ -68,7 +68,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
                 }
                 release_ptable_lock(this);
                 swtch(&this->context[cpuid()], p->context);
-
+                printf("scheduler: process id (pid:%d, state:%d) yields the cpu %d\n", p->pid, p->state, cpuid());
                 break;
             }
         }
