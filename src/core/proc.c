@@ -137,8 +137,11 @@ void add_loop_test(int times) {
         extern char loop_start[], loop_end[];
         u64 cpsize = loop_end - loop_start, tmpsize;
         PTEntriesPtr PagePtr;
-        p = alloc_pcb();
+        p = alloc_proc();
+
         acquire_sched_lock();
+        if (p == NULL) 
+            PANIC("Could not allocate init process");
         if ((p->pgdir = pgdir_init()) == NULL)
             PANIC("Could not initialize root pagetable");
         for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
@@ -153,6 +156,7 @@ void add_loop_test(int times) {
         p -> state = RUNNABLE;
         p -> sz = PAGE_SIZE;
         p -> context -> r30 = (u64)to_forkret;
+
         release_sched_lock();
     }
 }
