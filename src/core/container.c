@@ -76,7 +76,7 @@ void *alloc_resource(struct container *this, struct proc *p, resource_t resource
             if (this->pmap[i].valid == false)
             {
                 foundpid = this->scheduler.pid++;
-                this->pmap[i].valid == true;
+                this->pmap[i].valid = true;
                 this->pmap[i].pid_local = foundpid;
                 this->pmap[i].p = p;
                 break;
