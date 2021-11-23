@@ -96,6 +96,8 @@ void *alloc_resource(struct container *this, struct proc *p, resource_t resource
  */
 struct container *spawn_container(struct container *this, struct sched_op *op) {
     container *cont = alloc_container(false);
+    cont->parent = this;
+    cont->scheduler.parent = &this->scheduler;
     
     return cont;
 }

@@ -81,10 +81,14 @@ void yield_scheduler(struct scheduler *this) {
 } */
 NO_RETURN void scheduler_simple(struct scheduler *this) {
     int has_run;
+    i64 scheduler_count = 0;
     while(1){
         has_run = 0;
         acquire_ptable_lock(this);
-        printf("cpu %d take the scheduler %p.\n", cpuid(), this);
+        if (scheduler_count % 1000000 == 0) {
+            printf("cpu %d take the scheduler %p for %lldth loop.\n", cpuid(), this, scheduler_count);
+        }
+        scheduler_count += 1;
         for (u64 i = 0; i < NPROC; i++) {
             proc *p = &this->ptable.proc[i];
             struct cpu *c = thiscpu();
