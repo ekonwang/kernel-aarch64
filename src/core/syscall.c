@@ -7,9 +7,9 @@
  * The syscall number and parameters are all stored in the trapframe.
  * See `syscallno.h` for syscall number macros.
  */
-u64 syscall_dispatch(Trapframe *frame) {
+void syscall_dispatch(Trapframe *frame) {
     /* : Lab3 Syscall */
-    u64 sysnum = frame -> r8, retval = 0;
+    u64 sysnum = frame -> r8;
     switch(sysnum) {
     case SYS_myexecve:
         sys_myexecve((char *)(frame->r0));
@@ -24,5 +24,4 @@ u64 syscall_dispatch(Trapframe *frame) {
         PANIC("Unknown syscall number.");
         break;
     }
-	return retval;
 }

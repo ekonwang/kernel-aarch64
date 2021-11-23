@@ -35,7 +35,7 @@ void trap_global_handler(Trapframe *frame) {
 			 * where to record the return value?
 			 */
 			/* : Lab3 Syscall */
-            frame -> r0 = syscall_dispatch(frame);
+            syscall_dispatch(frame);
             // : warn if `iss` is not zero.
             if(iss)
                 PANIC("iss should not be zero");
