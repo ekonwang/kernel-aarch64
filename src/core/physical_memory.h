@@ -4,7 +4,7 @@
 #define _CORE_MEMORY_MANAGE_
 
 #include <common/spinlock.h>
-#define PAGEPOOLSIZE 1000000
+#define PAGEPOOLSIZE 200000
 
 /* typedef struct {
     void *struct_ptr;

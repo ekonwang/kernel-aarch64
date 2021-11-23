@@ -24,6 +24,7 @@ static void *pool_free(void *page_address, int numpages);
 
 static void pool_init(void *start, void *end) {
     u64 pagenum = ((char *)end - (char *)start) / PAGE_SIZE;
+    printf("\n==> [MMU] : MAX page for allocation : MIN(%d, %d).\n\n", pagenum, PAGEPOOLSIZE);
     poolnumend = MIN(poolnumend, pagenum);
     pagestart = start;
     for (int i = 0; i < poolnumend; i++) {
@@ -60,7 +61,7 @@ static void *pool_free(void *page_address, int numpages) {
         PANIC("kmem: page address not aligned.\n");
     bool already_alloc = false;
     int localstart = ((u64)page_address - (u64)pagestart) / PAGE_SIZE;
-    printf("pagestart:%p currentpage:%p\n", pagestart, page_address);
+    // printf("pagestart:%p currentpage:%p\n", pagestart, page_address);
     assert(localstart + numpages <= poolnumend);
     
     acquire_spinlock(&pmem.pmemlock);
