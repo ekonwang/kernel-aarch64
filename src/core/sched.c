@@ -48,7 +48,7 @@ void yield_scheduler(struct scheduler *this) {
     }
 }   
 
-NO_RETURN void scheduler_simple(struct scheduler *this) {
+/* NO_RETURN void scheduler_simple(struct scheduler *this) {
     int has_run;
     while(1){
         has_run = 0;
@@ -76,6 +76,35 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
         if (!has_run) {
             release_ptable_lock(this);
         }
+        yield_scheduler(this);
+    }
+} */
+NO_RETURN void scheduler_simple(struct scheduler *this) {
+    int has_run;
+    while(1){
+        has_run = 0;
+        acquire_ptable_lock(this);
+        printf("cpu %d take the scheduler %p.\n", cpuid(), this);
+        for (u64 i = 0; i < NPROC; i++) {
+            proc *p = &this->ptable.proc[i];
+            struct cpu *c = thiscpu();
+            if (p->state == RUNNABLE) {
+                printf("scheduler: process id (pid:%d) takes the cpu %d\n", p->pid, cpuid());
+                has_run = 1;
+                uvm_switch(p -> pgdir);
+                p->state = RUNNING;
+                c->proc = p;
+                if (p->is_scheduler) {
+                    c->scheduler = p;
+                    p->context = ((container *)p->cont)->scheduler.context[cpuid()];
+                }
+                printf("cpu %d: scheduler : %p\n", cpuid(), c->scheduler);
+                swtch(&this->context[cpuid()], p->context);
+                printf("scheduler: process id (pid:%d, state:%d) yields the cpu %d\n", p->pid, p->state, cpuid());
+                break;
+            }
+        }
+        release_ptable_lock(this);
         yield_scheduler(this);
     }
 }
