@@ -116,8 +116,9 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
 static void sched_simple(struct scheduler *this) {
     struct cpu *c = thiscpu();
     proc * p = c->proc;
-    printf("process %p at sched.\n", p);
+    printf("sched: process %p.\n", p);
     c->proc = ((container *)this->cont)->p;
+    printf("sched: sched to %p.\n", c->proc);
     swtch(&p->context, c->scheduler->context[cpuid()]);
     printf("process %p return from sched.\n", p);
 }
