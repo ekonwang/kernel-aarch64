@@ -117,7 +117,7 @@ static void sched_simple(struct scheduler *this) {
     struct cpu *c = thiscpu();
     proc * p = c->proc;
     printf("process %p at sched.\n", p);
-    c->proc = p->parent;
+    c->proc = ((container *)this->cont)->p;
     swtch(&p->context, c->scheduler->context[cpuid()]);
     printf("process %p return from sched.\n", p);
 }
