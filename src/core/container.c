@@ -49,7 +49,7 @@ struct container *alloc_container(bool root) {
     char *stack = nkalloc(4);
     cont->p->kstack = stack;
     for (int i = 1; i <= NCPU; i++) {
-        stack = cont->p->kstack + KSTACKSIZE * i;
+        stack = cont->p->kstack + PAGE_SIZE * i;
         stack -= sizeof(struct context);
         cont->scheduler.context[i-1] = (struct context *)stack;
         cont->scheduler.context[i-1]->r30 = (u64)container_entry;
