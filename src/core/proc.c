@@ -111,7 +111,6 @@ void yield() {
     proc *p = c->proc;
     p->state = RUNNABLE;
     sched();
-    printf("return from yield.\n");
 }
 
 /*

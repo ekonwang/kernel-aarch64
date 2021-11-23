@@ -43,7 +43,9 @@ static void release_ptable_lock(struct scheduler *this) {
  */
 void yield_scheduler(struct scheduler *this) {
     if (this->parent) {
+        printf("\n  ¶¶¶ yield_scheduler: this scheduler : %p\n", this);
         thiscpu()->scheduler = this->parent;
+        printf("\n  ¶¶¶ yield_scheduler: after yield : %p\n", thiscpu()->scheduler);
         yield();
     }
 }   
@@ -85,15 +87,12 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
     while(1){
         has_run = 0;
         acquire_ptable_lock(this);
-        if (scheduler_count % 1000000 == 0) {
-            printf("cpu %d take the scheduler %p for %lldth loop.\n", cpuid(), this, scheduler_count);
-        }
         scheduler_count += 1;
         for (u64 i = 0; i < NPROC; i++) {
             proc *p = &this->ptable.proc[i];
             struct cpu *c = thiscpu();
             if (p->state == RUNNABLE) {
-                printf("scheduler: process id (pid:%d) takes the cpu %d\n", p->pid, cpuid());
+                printf("\n  ≤≤≤ scheduler: process id (pid:%d) takes the cpu %d\n", p->pid, cpuid());
                 has_run = 1;
                 uvm_switch(p -> pgdir);
                 p->state = RUNNING;
@@ -102,13 +101,14 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
                     c->scheduler = p;
                     p->context = ((container *)p->cont)->scheduler.context[cpuid()];
                 }
-                printf("cpu %d: scheduler : %p\n", cpuid(), c->scheduler);
+                release_ptable_lock(this);
+                printf("  ≤≤≤ cpu %d: scheduler : %p\n", cpuid(), c->scheduler);
                 swtch(&this->context[cpuid()], p->context);
-                printf("scheduler: process id (pid:%d, state:%d) yields the cpu %d\n", p->pid, p->state, cpuid());
                 break;
             }
         }
-        release_ptable_lock(this);
+        if (!has_run)
+            release_ptable_lock(this);
         yield_scheduler(this);
     }
 }
@@ -116,11 +116,10 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
 static void sched_simple(struct scheduler *this) {
     struct cpu *c = thiscpu();
     proc * p = c->proc;
-    printf("sched: process %p.\n", p);
+    printf("\n  ≥≥≥ sched: process %p.\n", p);
     c->proc = ((container *)this->cont)->p;
-    printf("sched: sched to %p.\n", c->proc);
+    printf("  ≥≥≥ sched: sched to %p.\n", c->proc);
     swtch(&p->context, c->scheduler->context[cpuid()]);
-    printf("process %p return from sched.\n", p);
 }
 
 static struct proc *alloc_pcb_simple(struct scheduler *this) {
