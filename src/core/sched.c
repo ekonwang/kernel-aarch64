@@ -45,7 +45,7 @@ void yield_scheduler(struct scheduler *this) {
     if (this->parent) {
         printf("\n  ¶¶¶ yield_scheduler: this scheduler : %p\n", this);
         thiscpu()->scheduler = this->parent;
-        printf("\n  ¶¶¶ yield_scheduler: after yield : %p\n", thiscpu()->scheduler);
+        printf("  ¶¶¶ yield_scheduler: after yield : %p\n", thiscpu()->scheduler);
         yield();
     }
 }   
@@ -92,13 +92,13 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
             proc *p = &this->ptable.proc[i];
             struct cpu *c = thiscpu();
             if (p->state == RUNNABLE) {
-                printf("\n  ≤≤≤ scheduler: process id (pid:%d) takes the cpu %d\n", p->pid, cpuid());
+                printf("\n  ≤≤≤ scheduler: process id (pid:%d)[%p] takes the cpu %d\n", p->pid, p, cpuid());
                 has_run = 1;
                 uvm_switch(p -> pgdir);
                 p->state = RUNNING;
                 c->proc = p;
                 if (p->is_scheduler) {
-                    c->scheduler = p;
+                    c->scheduler = &((container *)p->cont)->scheduler;
                     p->context = ((container *)p->cont)->scheduler.context[cpuid()];
                 }
                 release_ptable_lock(this);

@@ -17,6 +17,7 @@ extern void add_loop_test(int times);
  * Maintain thiscpu()->scheduler.
  */
 static NO_RETURN void container_entry() {
+    add_loop_test(1);
     thiscpu()->scheduler->op->scheduler(thiscpu()->scheduler);
 
 	/* container_entry should enter scheduler and should not return */
@@ -33,6 +34,7 @@ static NO_RETURN void container_entry() {
 struct container *alloc_container(bool root) {
 	container *cont = alloc_object(&arena);
     memset(cont, 0, sizeof(container));
+    printf("\n**alloc_container : scheduler : %p, ptable starts at: %p\n", &cont->scheduler, &cont->scheduler.ptable);
     cont->scheduler.op = &simple_op;
     cont->scheduler.cont = cont;
     cont->scheduler.pid = 1;
@@ -119,7 +121,7 @@ void container_test_init() {
     struct container *c;
 
     do_cont_test = true;
-    add_loop_test(1);
+    // add_loop_test(1);
     c = spawn_container(root_container, &simple_op);
     assert(c != NULL);
 }

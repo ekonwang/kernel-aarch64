@@ -4,7 +4,7 @@
 .global loop_end
 
 loop_start:
-    mov 	x3, #0x20
+    mov 	x3, #0x2
     mov     x8, #SYS_myprint
     mov 	x0, #0
     mov		x1, #1
