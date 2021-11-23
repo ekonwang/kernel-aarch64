@@ -43,8 +43,15 @@ struct container *alloc_container(bool root) {
     cont->p = alloc_pcb();
     cont->p->is_scheduler = true;
     cont->p->cont = cont;
-    for (int i = 0; i < NCPU; i++)
-        cont->scheduler.context[i]->r30 = (u64)container_entry;
+
+    char *stack = nkalloc(4);
+    cont->p->kstack = stack;
+    for (int i = 1; i <= NCPU; i++) {
+        stack = cont->p->kstack + KSTACKSIZE * i;
+        stack -= sizeof(struct context);
+        cont->scheduler.context[i-1] = (struct context *)stack;
+        cont->scheduler.context[i-1]->r30 = (u64)container_entry;
+    }
     return cont;
 }
 
@@ -96,9 +103,12 @@ void *alloc_resource(struct container *this, struct proc *p, resource_t resource
  */
 struct container *spawn_container(struct container *this, struct sched_op *op) {
     container *cont = alloc_container(false);
+    acquire_sched_lock();
+    cont->p->state = RUNNABLE;
+    cont->p->sz = PAGE_SIZE * NCPU;
     cont->parent = this;
     cont->scheduler.parent = &this->scheduler;
-    
+    release_sched_lock();
     return cont;
 }
 
