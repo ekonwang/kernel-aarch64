@@ -107,6 +107,9 @@ void exit() {
  * Switch to the scheduler of this proc.
  */
 void yield() {
+    struct cpu *c = thiscpu();
+    proc *p = c->proc;
+    p->state = RUNNABLE;
     sched();
     printf("return from yield.\n");
 }
