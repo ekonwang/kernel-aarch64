@@ -83,12 +83,10 @@ void yield_scheduler(struct scheduler *this) {
 } */
 NO_RETURN void scheduler_simple(struct scheduler *this) {
     int has_run;
-    i64 scheduler_count = 0;
     while(1){
-        has_run = 0;
-        acquire_ptable_lock(this);
-        scheduler_count += 1;
         for (u64 i = 0; i < NPROC; i++) {
+            acquire_ptable_lock(this);
+            has_run = 0;
             proc *p = &this->ptable.proc[i];
             struct cpu *c = thiscpu();
             if (p->state == RUNNABLE) {
@@ -97,19 +95,20 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
                 uvm_switch(p -> pgdir);
                 p->state = RUNNING;
                 c->proc = p;
+                release_ptable_lock(this);
                 if (p->is_scheduler) {
                     c->scheduler = &((container *)p->cont)->scheduler;
-                    p->context = ((container *)p->cont)->scheduler.context[cpuid()];
+                    printf("  ≤≤≤ cpu %d: scheduler CHANGE to : %p\n", cpuid(), c->scheduler);
+                    swtch(&this->context[cpuid()], ((container *)p->cont)->scheduler.context[cpuid()]);
+                }else {
+                    swtch(&this->context[cpuid()], p->context);
                 }
-                release_ptable_lock(this);
-                printf("  ≤≤≤ cpu %d: scheduler : %p\n", cpuid(), c->scheduler);
-                swtch(&this->context[cpuid()], p->context);
-                break;
             }
+            if (!has_run)
+                release_ptable_lock(this);
+            else
+                yield_scheduler(this);
         }
-        if (!has_run)
-            release_ptable_lock(this);
-        yield_scheduler(this);
     }
 }
 
@@ -119,7 +118,10 @@ static void sched_simple(struct scheduler *this) {
     printf("\n  ≥≥≥ sched: process %p.\n", p);
     c->proc = ((container *)this->cont)->p;
     printf("  ≥≥≥ sched: sched to %p.\n", c->proc);
-    swtch(&p->context, c->scheduler->context[cpuid()]);
+    if (p->is_scheduler) 
+        swtch(&((container *)p->cont)->scheduler.context[cpuid()], c->scheduler->context[cpuid()]);
+    else
+        swtch(&p->context, c->scheduler->context[cpuid()]);
 }
 
 static struct proc *alloc_pcb_simple(struct scheduler *this) {

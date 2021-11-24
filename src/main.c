@@ -62,7 +62,8 @@ NORETURN void main() {
     init_system_per_cpu();
 
     if (cpuid() == 0) {
-        spawn_init_process();
+        // spawn_init_process();
+        // add_loop_test(1);
         container_test_init();
         enter_scheduler();
     } else {
