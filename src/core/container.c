@@ -34,7 +34,7 @@ static NO_RETURN void container_entry() {
 struct container *alloc_container(bool root) {
 	container *cont = alloc_object(&arena);
     memset(cont, 0, sizeof(container));
-    printf("\n**alloc_container : scheduler : %p, ptable starts at: %p\n", &cont->scheduler, &cont->scheduler.ptable);
+    // printf("\n**alloc_container : scheduler : %p, ptable starts at: %p\n", &cont->scheduler, &cont->scheduler.ptable);
     cont->scheduler.op = &simple_op;
     cont->scheduler.cont = cont;
     cont->scheduler.pid = 1;

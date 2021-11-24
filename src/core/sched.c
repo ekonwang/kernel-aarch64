@@ -43,9 +43,9 @@ static void release_ptable_lock(struct scheduler *this) {
  */
 void yield_scheduler(struct scheduler *this) {
     if (this->parent) {
-        printf("\n  ¶¶¶ yield_scheduler: this scheduler : %p\n", this);
+        // printf("\n  ¶¶¶ yield_scheduler: this scheduler : %p\n", this);
         thiscpu()->scheduler = this->parent;
-        printf("  ¶¶¶ yield_scheduler: after yield : %p\n", thiscpu()->scheduler);
+        // printf("  ¶¶¶ yield_scheduler: after yield : %p\n", thiscpu()->scheduler);
         yield();
     }
 }   
@@ -90,7 +90,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
             proc *p = &this->ptable.proc[i];
             struct cpu *c = thiscpu();
             if (p->state == RUNNABLE) {
-                printf("\n  ≤≤≤ scheduler: process id (pid:%d)[%p] takes the cpu %d\n", p->pid, p, cpuid());
+                // printf("\n  ≤≤≤ scheduler: process id (pid:%d)[%p] takes the cpu %d\n", p->pid, p, cpuid());
                 has_run = 1;
                 uvm_switch(p -> pgdir);
                 p->state = RUNNING;
@@ -98,7 +98,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
                 release_ptable_lock(this);
                 if (p->is_scheduler) {
                     c->scheduler = &((container *)p->cont)->scheduler;
-                    printf("  ≤≤≤ cpu %d: scheduler CHANGE to : %p\n", cpuid(), c->scheduler);
+                    // printf("  ≤≤≤ cpu %d: scheduler CHANGE to : %p\n", cpuid(), c->scheduler);
                     swtch(&this->context[cpuid()], ((container *)p->cont)->scheduler.context[cpuid()]);
                 }else {
                     swtch(&this->context[cpuid()], p->context);
@@ -115,9 +115,9 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
 static void sched_simple(struct scheduler *this) {
     struct cpu *c = thiscpu();
     proc * p = c->proc;
-    printf("\n  ≥≥≥ sched: process %p.\n", p);
+    // printf("\n  ≥≥≥ sched: process %p.\n", p);
     c->proc = ((container *)this->cont)->p;
-    printf("  ≥≥≥ sched: sched to %p.\n", c->proc);
+    // printf("  ≥≥≥ sched: sched to %p.\n", c->proc);
     if (p->is_scheduler) 
         swtch(&((container *)p->cont)->scheduler.context[cpuid()], c->scheduler->context[cpuid()]);
     else
