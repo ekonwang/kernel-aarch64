@@ -85,22 +85,27 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
     int has_run;
     while(1){
         for (u64 i = 0; i < NPROC; i++) {
-            acquire_ptable_lock(this);
             has_run = 0;
-            proc *p = &this->ptable.proc[i];
             struct cpu *c = thiscpu();
+            acquire_ptable_lock(this);
+            proc *p = &this->ptable.proc[i];
             if (p->state == RUNNABLE) {
                 // printf("\n  ≤≤≤ scheduler: process id (pid:%d)[%p] takes the cpu %d\n", p->pid, p, cpuid());
                 has_run = 1;
                 uvm_switch(p -> pgdir);
-                p->state = RUNNING;
+                if (!p->is_scheduler)
+                    p->state = RUNNING;
                 c->proc = p;
                 release_ptable_lock(this);
-                if (p->is_scheduler) {
+
+                if (p->is_scheduler) 
+                {
                     c->scheduler = &((container *)p->cont)->scheduler;
                     // printf("  ≤≤≤ cpu %d: scheduler CHANGE to : %p\n", cpuid(), c->scheduler);
                     swtch(&this->context[cpuid()], ((container *)p->cont)->scheduler.context[cpuid()]);
-                }else {
+                }
+                else 
+                {
                     swtch(&this->context[cpuid()], p->context);
                 }
             }
