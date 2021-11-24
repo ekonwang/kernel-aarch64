@@ -17,7 +17,7 @@ extern void add_loop_test(int times);
  * Maintain thiscpu()->scheduler.
  */
 static NO_RETURN void container_entry() {
-    add_loop_test(8);
+    add_loop_test(2);
     thiscpu()->scheduler->op->scheduler(thiscpu()->scheduler);
 
 	/* container_entry should enter scheduler and should not return */
