@@ -80,7 +80,7 @@ void *alloc_resource(struct container *this, struct proc *p, resource_t resource
     {   
         int foundpid = -1;
         acquire_spinlock(&this->lock);
-        for (int i = 0; i < NPROC; i++) 
+        for (int i = 0; i < NPID; i++) 
         {
             if (this->pmap[i].valid == false)
             {
@@ -118,10 +118,12 @@ struct container *spawn_container(struct container *this, struct sched_op *op) {
  * Add containers for test
  */
 void container_test_init() {
-    struct container *c;
+    struct container *c, *c_more;
 
     do_cont_test = true;
     // add_loop_test(1);
     c = spawn_container(root_container, &simple_op);
     assert(c != NULL);
+    c_more = spawn_container(root_container, &simple_op);
+    assert(c_more != NULL);
 }
