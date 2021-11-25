@@ -6,6 +6,7 @@
 #include <core/proc.h>
 #include <core/sched.h>
 #include <core/virtual_memory.h>
+#include <core/container.h>
 
 extern void to_forkret();
 extern void trap_return();
@@ -121,12 +122,30 @@ void sleep(void *chan, SpinLock *lock) {
     proc *p = thiscpu() -> proc;
     p -> state = SLEEPING;
     sched();
-    printf("wake up.\n");
+    printf("process(pid = %d)[%p] wake up.\n", p->pid, p);
+}
+
+static void rec_wakeup(void *chan, struct scheduler *this) {
+    for (int i = 0; i < NPROC; i++) 
+    {
+        proc *p = &this->ptable.proc[i];
+        acquire_spinlock(&this->ptable.lock);
+        if (p->state == SLEEPING && p->chan == chan) 
+        {
+            p->state = RUNNABLE;
+        }
+        release_spinlock(&this->ptable.lock);
+        if (p->is_scheduler) 
+        {
+            rec_wakeup(chan, &((container *)(p->cont))->scheduler);
+        }
+    }
 }
 
 /* Wake up all processes sleeping on chan. */
 void wakeup(void *chan) {
-    struct container *cont = thiscpu()->scheduler;
+    struct cpu *c = thiscpu();
+    rec_wakeup(chan, c->scheduler);
 }
 
 /* 
