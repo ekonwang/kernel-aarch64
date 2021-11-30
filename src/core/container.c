@@ -118,12 +118,13 @@ struct container *spawn_container(struct container *this, struct sched_op *op) {
  * Add containers for test
  */
 void container_test_init() {
-    struct container *c, *c_more;
+    struct container *c[8];
 
     do_cont_test = true;
-    // add_loop_test(1);
-    c = spawn_container(root_container, &simple_op);
-    assert(c != NULL);
-    c_more = spawn_container(root_container, &simple_op);
-    assert(c_more != NULL);
+    for (int i = 0; i < 2; i++)
+    {
+        c[i] = spawn_container(root_container, &simple_op);
+        assert(c != NULL);
+    }
+    
 }
