@@ -17,8 +17,8 @@ extern void add_loop_test(int times);
  * Maintain thiscpu()->scheduler.
  */
 static NO_RETURN void container_entry() {
-    /* TODO: lab6 container */
-
+    add_loop_test(3);
+    thiscpu()->scheduler->op->scheduler(thiscpu()->scheduler);
 
 	/* container_entry should enter scheduler and should not return */
     PANIC("scheduler should not return");
@@ -32,8 +32,29 @@ static NO_RETURN void container_entry() {
  * Initialize some pointers.
  */
 struct container *alloc_container(bool root) {
-    /* TODO: lab6 container */
-	
+	container *cont = alloc_object(&arena);
+    memset(cont, 0, sizeof(container));
+    // printf("\n**alloc_container : scheduler : %p, ptable starts at: %p\n", &cont->scheduler, &cont->scheduler.ptable);
+    cont->scheduler.op = &simple_op;
+    cont->scheduler.cont = cont;
+    cont->scheduler.pid = 1;
+    init_spinlock(&cont->scheduler.ptable.lock, "ptable");
+    init_spinlock(&cont->lock, "container");
+    if (root)
+        return cont;
+    cont->p = alloc_pcb();
+    cont->p->is_scheduler = true;
+    cont->p->cont = cont;
+
+    char *stack = nkalloc(4);
+    cont->p->kstack = stack;
+    for (int i = 1; i <= NCPU; i++) {
+        stack = cont->p->kstack + PAGE_SIZE * i;
+        stack -= sizeof(struct context);
+        cont->scheduler.context[i-1] = (struct context *)stack;
+        cont->scheduler.context[i-1]->r30 = (u64)container_entry;
+    }
+    return cont;
 }
 
 /*
@@ -41,8 +62,10 @@ struct container *alloc_container(bool root) {
  * Initialize the memory pool and root scheduler.
  */
 void init_container() {
-    /* TODO: lab6 container */
-
+    ArenaPageAllocator allocator = {.allocate = kalloc, .free = kfree};
+    init_arena(&arena, sizeof(container), allocator);
+    puts("init arena okay.");
+    root_container = alloc_container(true);
 }
 
 /* 
@@ -50,26 +73,58 @@ void init_container() {
  * You can add parameters if needed.
  */
 void *alloc_resource(struct container *this, struct proc *p, resource_t resource) {
-    /* TODO: lab6 container */
-
+    if (this == NULL || p == NULL) 
+        return NULL;
+    
+    if (resource == PID) 
+    {   
+        int foundpid = -1;
+        acquire_spinlock(&this->lock);
+        for (int i = 0; i < NPID; i++) 
+        {
+            if (this->pmap[i].valid == false)
+            {
+                foundpid = this->scheduler.pid++;
+                this->pmap[i].valid = true;
+                this->pmap[i].pid_local = foundpid;
+                this->pmap[i].p = p;
+                break;
+            }
+        }
+        if (foundpid < 0)
+            PANIC("alloc_resource : could not allocate new pid.");
+        release_spinlock(&this->lock);
+        alloc_resource(this->parent, p, PID);
+        void *addr = &foundpid;
+        return addr;
+    }
 }
 
 /* 
  * Spawn a new process.
  */
 struct container *spawn_container(struct container *this, struct sched_op *op) {
-    /* TODO: lab6 container */
-
+    container *cont = alloc_container(false);
+    acquire_sched_lock();
+    cont->p->state = RUNNABLE;
+    cont->p->sz = PAGE_SIZE * NCPU;
+    cont->parent = this;
+    cont->scheduler.parent = &this->scheduler;
+    release_sched_lock();
+    return cont;
 }
 
 /*
  * Add containers for test
  */
 void container_test_init() {
-    struct container *c;
+    struct container *c[8];
 
     do_cont_test = true;
-    add_loop_test(1);
-    c = spawn_container(root_container, &simple_op);
-    assert(c != NULL);
+    for (int i = 0; i < 2; i++)
+    {
+        c[i] = spawn_container(root_container, &simple_op);
+        assert(c != NULL);
+    }
+    
 }

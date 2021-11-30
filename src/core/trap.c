@@ -16,6 +16,7 @@ void init_trap() {
 
 void trap_global_handler(Trapframe *frame) {
     u64 esr = arch_get_esr();
+    // printf("esr : %u\n", esr);
     u64 ec = esr >> ESR_EC_SHIFT;
     u64 iss = esr & ESR_ISS_MASK;
     u64 ir = esr & ESR_IR_MASK;
@@ -25,11 +26,10 @@ void trap_global_handler(Trapframe *frame) {
     switch (ec) {
         case ESR_EC_UNKNOWN: {
             if (ir)
-                PANIC("unknown error");
+                PANIC("esr_ec unknown error");
             else
                 interrupt_global_handler();
         } break;
-
         case ESR_EC_SVC64: {
             /*
 			 * Here, it is a syscall request.
@@ -38,15 +38,17 @@ void trap_global_handler(Trapframe *frame) {
 			 * Note: this function returns void,
 			 * where to record the return value?
 			 */
-            /* TODO: Lab3 Syscall */
-
-            // TODO: warn if `iss` is not zero.
-            (void)iss;
+			/* : Lab3 Syscall */
+            syscall_dispatch(frame);
+            // : warn if `iss` is not zero.
+            if(iss)
+                PANIC("iss should not be zero");
+            
         } break;
 
         default: {
-            // TODO: should exit current process here.
-            // exit(1);
+            // : should exit current process here.
+            exit(1);
         }
     }
     /*

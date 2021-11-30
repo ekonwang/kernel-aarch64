@@ -13,10 +13,17 @@ el1_sp0:
 
 el1_spx:
     /* if you want to disable in-kernel traps, just replace `enter_trap` with `trap_error` */
+<<<<<<< HEAD
     trap_error(4)
     trap_error(5)
     /* enter_trap */
     /* enter_trap */
+=======
+    //trap_error(4)
+    //trap_error(5)
+    enter_trap
+    enter_trap
+>>>>>>> lab6
     trap_error(6)
     trap_error(7)
 
