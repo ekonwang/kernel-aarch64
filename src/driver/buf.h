@@ -11,14 +11,10 @@
 
 struct buf {
     int flags;
+    bool dirty;
+    bool valid;
     u32 blockno;
     u8 data[BSIZE];  // 1B*512
-
-    /* 
-     * Add other necessary elements. It depends on you.
-     */
-    /* TODO: Lab7 driver. */
-
 };
 
 /* 

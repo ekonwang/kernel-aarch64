@@ -161,9 +161,9 @@ int fls_long(unsigned long x);
 #define SR_CMD_INHIBIT     0x00000001
 
 // Arguments for specific commands.
-// TODO: What's the correct voltage window for the RPi SD interface?
+// todo: What's the correct voltage window for the RPi SD interface?
 // 2.7v-3.6v (given by 0x00ff8000) or something narrower?
-// TODO: For now, don't offer to switch voltage.
+// todo: For now, don't offer to switch voltage.
 #define ACMD41_HCS        0x40000000
 #define ACMD41_SDXC_POWER 0x10000000
 #define ACMD41_S18R       0x01000000
@@ -241,7 +241,7 @@ typedef struct EMMCCommand {
 } EMMCCommand;
 
 // Command table.
-// TODO: TM_DAT_DIR_CH required in any of these?
+// todo: TM_DAT_DIR_CH required in any of these?
 static EMMCCommand sdCommandTable[] = {
     {"GO_IDLE_STATE", 0x00000000 | CMD_RSPNS_NO, RESP_NO, RCA_NO, 0},
     {"ALL_SEND_CID", 0x02000000 | CMD_RSPNS_136, RESP_R2I, RCA_NO, 0},
@@ -512,7 +512,7 @@ void sd_init() {
 
     /*
      * Read and parse 1st block (MBR) and collect whatever
-     * information you wan.
+     * information you want.
      *
      * Hint: Maybe need to use sd_start for reading, and
      * sdWaitForInterrupt for clearing certain interrupt.

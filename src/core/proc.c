@@ -145,7 +145,7 @@ static void rec_wakeup(void *chan, struct scheduler *this) {
 /* Wake up all processes sleeping on chan. */
 void wakeup(void *chan) {
     struct cpu *c = thiscpu();
-    rec_wakeup(chan, c->scheduler);
+    rec_wakeup(chan, &root_container->scheduler);
 }
 
 /* 

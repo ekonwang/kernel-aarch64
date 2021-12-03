@@ -59,3 +59,4 @@ void yield();
 NO_RETURN void exit();
 void sleep(void *chan, SpinLock *lock);
 void wakeup(void *chan);
+void add_loop_test(int times);

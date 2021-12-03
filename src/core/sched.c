@@ -106,13 +106,15 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
                 }
                 else 
                 {
+                    // printf("  ≤≤≤ cpu %d: will jump to %p [context : %p]\n", cpuid(), p->context->r30, p->context);
                     swtch(&this->context[cpuid()], p->context);
                 }
             }
-            if (!has_run)
-                release_ptable_lock(this);
-            else
+            if (has_run)
                 yield_scheduler(this);
+                /* release_ptable_lock(this); */
+            else
+                release_ptable_lock(this);
         }
     }
 }
@@ -120,9 +122,9 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
 static void sched_simple(struct scheduler *this) {
     struct cpu *c = thiscpu();
     proc * p = c->proc;
-    // printf("\n  ≥≥≥ sched: process %p.\n", p);
+    /* printf("\n  ≥≥≥ sched: (cpu %d), process: %p\n", cpuid(), p); */
     c->proc = ((container *)this->cont)->p;
-    // printf("  ≥≥≥ sched: sched to %p.\n", c->proc);
+    // printf("  ≥≥≥ sched: sched to %p\n", c->proc);
     if (p->is_scheduler) 
         swtch(&((container *)p->cont)->scheduler.context[cpuid()], c->scheduler->context[cpuid()]);
     else
