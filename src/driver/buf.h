@@ -24,7 +24,7 @@ static ListNode head; // Do not forget to initialize it.
  */
 
 static void init_buf_lock() {
-    init_buf_lock(&buflock);
+    init_spinlock(&buflock, "buflock");
 }
 
 static void acquire_buf_lock() {

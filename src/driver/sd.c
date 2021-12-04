@@ -508,7 +508,7 @@ void sd_init() {
      */
     /* TODO: Lab7 driver. */
     init_sdbuf();
-    init_spinlock(&sdlock);
+    init_spinlock(&sdlock, "sdlock");
 
     /*
      * Read and parse 1st block (MBR) and collect whatever
