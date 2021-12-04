@@ -506,7 +506,6 @@ void sd_init() {
      * Initialize the lock and request queue if any.
      * Remember to call sd_init() at somewhere.
      */
-    /* TODO: Lab7 driver. */
     init_sdbuf();
     init_spinlock(&sdlock, "sdlock");
 
@@ -518,8 +517,7 @@ void sd_init() {
      * sdWaitForInterrupt for clearing certain interrupt.
      */
 
-    /* TODO: Lab7 driver. */
-
+    
 }
 
 static void sd_delayus(u32 c) {

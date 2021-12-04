@@ -49,7 +49,7 @@ void trap_global_handler(Trapframe *frame) {
 
         default: {
             // : should exit current process here.
-            exit(1);
+            exit();
         }
     }
     /*
