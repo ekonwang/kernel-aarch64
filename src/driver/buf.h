@@ -70,5 +70,3 @@ void add_task(buf *buf) {
 /* 
  * Add some useful functions to use your buffer list, such as push, pop and so on.
  */
-
-/* TODO: Lab7 driver. */

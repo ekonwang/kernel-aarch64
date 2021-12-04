@@ -161,9 +161,9 @@ int fls_long(unsigned long x);
 #define SR_CMD_INHIBIT     0x00000001
 
 // Arguments for specific commands.
-// todo: What's the correct voltage window for the RPi SD interface?
+// What's the correct voltage window for the RPi SD interface?
 // 2.7v-3.6v (given by 0x00ff8000) or something narrower?
-// todo: For now, don't offer to switch voltage.
+// For now, don't offer to switch voltage.
 #define ACMD41_HCS        0x40000000
 #define ACMD41_SDXC_POWER 0x10000000
 #define ACMD41_S18R       0x01000000
@@ -241,7 +241,7 @@ typedef struct EMMCCommand {
 } EMMCCommand;
 
 // Command table.
-// todo: TM_DAT_DIR_CH required in any of these?
+// TM_DAT_DIR_CH required in any of these?
 static EMMCCommand sdCommandTable[] = {
     {"GO_IDLE_STATE", 0x00000000 | CMD_RSPNS_NO, RESP_NO, RCA_NO, 0},
     {"ALL_SEND_CID", 0x02000000 | CMD_RSPNS_136, RESP_R2I, RCA_NO, 0},
@@ -507,8 +507,8 @@ void sd_init() {
      * Remember to call sd_init() at somewhere.
      */
     /* TODO: Lab7 driver. */
-    
-
+    init_sdbuf();
+    init_spinlock(&sdlock);
 
     /*
      * Read and parse 1st block (MBR) and collect whatever
@@ -842,7 +842,7 @@ static int sdSendCommandP(EMMCCommand *cmd, int arg) {
             return SD_OK;
 
             // RESP0 contains OCR register
-            // TODO: What is the correct time to wait for this?
+            // What is the correct time to wait for this?
         case RESP_R3:
             sdCard.status = 0;
             sdCard.ocr = (u32)resp0;
@@ -1117,7 +1117,7 @@ static int sdResetCard(int resetType) {
     }
 
     // Enable internal clock and set data timeout.
-    // TODO: Correct value for timeout?
+    // Correct value for timeout?
     *EMMC_CONTROL1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX;
     sd_delayus(10);
 
@@ -1157,7 +1157,7 @@ static int sdResetCard(int resetType) {
 static int sdAppSendOpCond(int arg) {
     // Send APP_SEND_OP_COND with the given argument (for SC or HC cards).
     // Note: The host shall set ACMD41 timeout more than 1 second to abort repeat of issuing ACMD41
-    // TODO: how to set ACMD41 timeout? Is that the wait?
+    // how to set ACMD41 timeout? Is that the wait?
     printf("- EMMC: Sending ACMD41 SEND_OP_COND status %x\n", *EMMC_STATUS);
     int resp, count;
     if ((resp = sdSendCommandA(IX_APP_SEND_OP_COND, arg)) && resp != SD_TIMEOUT) {
@@ -1290,7 +1290,7 @@ int sdInit() {
     if (sdCard.init)
         return SD_OK;
 
-    // TODO: check version >= 1 and <= 3?
+    // check version >= 1 and <= 3?
     sdHostVer = (*EMMC_SLOTISR_VER & HOST_SPEC_NUM) >> HOST_SPEC_NUM_SHIFT;
 
     // Get base clock speed.
@@ -1353,7 +1353,7 @@ int sdInit() {
         return sdDebugResponse(resp);
 
     // Send SEND_REL_ADDR (CMD3)
-    // TODO: In theory, loop back to SEND_IF_COND to find additional cards.
+    // In theory, loop back to SEND_IF_COND to find additional cards.
     if ((resp = sdSendCommand(IX_SEND_REL_ADDR)))
         return sdDebugResponse(resp);
 
@@ -1378,7 +1378,7 @@ int sdInit() {
         return sdDebugResponse(resp);
 
     // Send CARD_SELECT  (CMD7)
-    // TODO: Check card_is_locked status in the R1 response from CMD7 [bit 25], if so, use CMD42 to unlock
+    // Check card_is_locked status in the R1 response from CMD7 [bit 25], if so, use CMD42 to unlock
     // CMD42 structure [4.3.7] same as a single block write; data block includes
     // PWD setting mode, PWD len, PWD data.
     if ((resp = sdSendCommand(IX_CARD_SELECT)))
@@ -1398,7 +1398,7 @@ int sdInit() {
     }
 
     // Send SET_BLOCKLEN (CMD16)
-    // TODO: only needs to be sent for SDSC cards.  For SDHC and SDXC cards block length is fixed
+    // only needs to be sent for SDSC cards.  For SDHC and SDXC cards block length is fixed
     // at 512 anyway.
     if ((resp = sdSendCommandA(IX_SET_BLOCKLEN, 512)))
         return sdDebugResponse(resp);
