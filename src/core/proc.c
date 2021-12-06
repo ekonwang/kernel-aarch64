@@ -121,6 +121,9 @@ void yield() {
 void sleep(void *chan, SpinLock *lock) {
     proc *p = thiscpu() -> proc;
     p -> state = SLEEPING;
+    if (lock) {
+        acquire_spinlock(lock);
+    }
     sched();
     printf("process(pid = %d)[%p] wake up.\n", p->pid, p);
 }

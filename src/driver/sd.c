@@ -29,7 +29,7 @@
 #include <driver/uart.h>
 
 // Private functions.
-static void sd_start(struct buf *b);
+static void sd_start(struct buf *b, bool Transfer);
 static void sd_delayus(u32 cnt);
 static int sdInit();
 static void sdParseCID();
@@ -509,6 +509,7 @@ void sd_init() {
     init_sdbuf();
     init_spinlock(&sdlock, "sdlock");
     set_interrupt_handler(IRQ_SDIO, sd_intr);
+    set_interrupt_handler(IRQ_ARASANSDIO, sd_intr);
     /*
      * Read and parse 1st block (MBR) and collect whatever
      * information you want.
@@ -516,7 +517,6 @@ void sd_init() {
      * Hint: Maybe need to use sd_start for reading, and
      * sdWaitForInterrupt for clearing certain interrupt.
      */
-
     
 }
 
@@ -526,7 +526,7 @@ static void sd_delayus(u32 c) {
 }
 
 /* Start the request for b. Caller must hold sdlock. */
-static void sd_start(struct buf *b) {
+static void sd_start(struct buf *b, bool Transfer) {
     // Address is different depending on the card type.
     // HC pass address as block #.
     // SC pass address straight through.
@@ -537,6 +537,7 @@ static void sd_start(struct buf *b) {
 
     disb();
     // Ensure that any data operation has completed before doing the transfer.
+    asserts(!(b->flags & B_VALID), "valid buf should not be here.");
     asserts(!*EMMC_INTERRUPT, "emmc interrupt flag should be empty: 0x%x. ", *EMMC_INTERRUPT);
     disb();
 
@@ -554,7 +555,7 @@ static void sd_start(struct buf *b) {
     u32 *intbuf = (u32 *)b->data;
     asserts((((i64)b->data) & 0x03) == 0, "Only support word-aligned buffers. ");
 
-    if (write) {
+    if (write && Transfer) {
         // Wait for ready interrupt for the next block.
         if ((resp = sdWaitForInterrupt(INT_WRITE_RDY))) {
             PANIC("* EMMC ERROR: Timeout waiting for ready to write\n");
@@ -563,6 +564,15 @@ static void sd_start(struct buf *b) {
         asserts(!*EMMC_INTERRUPT, "%d ", *EMMC_INTERRUPT);
         while (done < 128)
             *EMMC_DATA = intbuf[done++];
+    }
+
+    else if (Transfer) {
+        if ((resp = sdWaitForInterrupt(INT_READ_RDY))) {
+            PANIC("* EMMC ERROR: Timeout waiting for ready to read\n");
+        }
+        asserts(!*EMMC_INTERRUPT, "%d ", *EMMC_INTERRUPT);
+        while (done < 128)
+            intbuf[done++] = *EMMC_DATA;
     }
 }
 
@@ -585,8 +595,22 @@ void sd_intr() {
      * You may use some buflist functions, disb(), sd_start(), wakeup() and
      * sdWaitForInterrupt() to complete this function.
      */
-    
+    buf *b = NULL;
+    acquire_spinlock(&sdlock);
+    printf("sd_intr entry, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
+    *EMMC_INTERRUPT = *EMMC_INTERRUPT;
 
+    while(b = fetch_task()) {
+        int write = b->flags & B_DIRTY, resp;
+        sd_start(b, true);
+        if ((resp = sdWaitForInterrupt(INT_DATA_DONE))) {
+            PANIC("* EMMC ERROR: Timeout waiting for ready to read\n");
+        }
+        b->flags = B_VALID;
+        wakeup(b);
+    }
+
+    release_spinlock(&sdlock);
 }
 
 /*
@@ -595,28 +619,24 @@ void sd_intr() {
  * Else if B_VALID is not set, read buf from disk, set B_VALID.
  */
 void sdrw(struct buf *b) {
-    
     /* 
      * Add to the list, if list is empty, then use sd_start
      * then sleep, use loop to check whether buf flag is modified, if modified, then break 
      */
+
     int flags = b->flags, read = !(b->flags);
     if (flags == B_VALID)
         return;
-    
 
+    add_task(b);
     acquire_spinlock(&sdlock);
-
-    // if write or buflist is not empty
-    if (flags == B_DIRTY || !try_fetch_task()) {
-        sd_start(b);
-        if (read) {
-
-        }
+    if (!try_fetch_task()) {
+        sd_start(b, false);
     }
-    b->flags = B_VALID;
-
     release_spinlock(&sdlock);
+
+    sleep(b, NULL);
+    asserts(b->flags & B_VALID, "flag should be valid after being waken.");
 }   
 
 /* SD card test and benchmark. */
