@@ -36,44 +36,13 @@ static void release_buf_lock() {
     release_spinlock(&buflock);
 }
 
-void init_sdbuf() {
-    init_buf_lock();
-    init_list_node(&head);
-}
+void init_sdbuf();
 
 // Operation on buflist.
 
-buf *try_fetch_task() {
-    acquire_buf_lock();
-    buf *thisbuf = NULL;
-    if (head.next != (ListNode *)&head) {
-        thisbuf = (buf *)container_of(head.next, buf, listnode);
-    }
-    release_buf_lock();
-    return thisbuf;
-}
-
-buf *fetch_task() {
-    buf *thisbuf = try_fetch_task();
-    acquire_buf_lock();
-    detach_from_list(&thisbuf->listnode);
-    release_buf_lock();
-    return thisbuf;
-}
-
-void add_task(buf *buf) {
-    acquire_buf_lock();
-    ListNode *bufhead = &head;
-    ListNode *buftail = bufhead->prev;
-    buf->listnode.prev = buftail;
-    buf->listnode.next = bufhead;
-    buftail->next = &(buf->listnode);
-    bufhead->prev = &(buf->listnode);
-    release_buf_lock();
-}
-/* 
- * 
- */
+buf *try_fetch_task();
+buf *fetch_task();
+void add_task(buf *buf);
 
 /* 
  * Add some useful functions to use your buffer list, such as push, pop and so on.

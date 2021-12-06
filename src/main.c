@@ -10,6 +10,7 @@
 #include <core/virtual_memory.h>
 #include <driver/clock.h>
 #include <driver/interrupt.h>
+#include <driver/sd.h>
 
 struct cpu cpus[NCPU];
 
@@ -34,6 +35,7 @@ void init_system_once() {
     // vm_test();
     arena_test();
     init_container();
+    sd_init();
 
     release_spinlock(&init_lock);
 }
@@ -63,7 +65,7 @@ NORETURN void main() {
 
     if (cpuid() == 0) {
         // spawn_init_process();
-        add_loop_test(1);
+        // add_loop_test(1);
         // container_test_init();
         enter_scheduler();
     } else {
