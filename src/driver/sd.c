@@ -508,7 +508,7 @@ void sd_init() {
      */
     init_sdbuf();
     init_spinlock(&sdlock, "sdlock");
-
+    set_interrupt_handler(IRQ_SDIO, sd_intr);
     /*
      * Read and parse 1st block (MBR) and collect whatever
      * information you want.
@@ -586,7 +586,7 @@ void sd_intr() {
      * sdWaitForInterrupt() to complete this function.
      */
     
-    /* TODO: Lab7 driver. */
+
 }
 
 /*
@@ -600,9 +600,24 @@ void sdrw(struct buf *b) {
      * Add to the list, if list is empty, then use sd_start
      * then sleep, use loop to check whether buf flag is modified, if modified, then break 
      */
+    int flags = b->flags, read = !(b->flags);
+    if (flags == B_VALID)
+        return;
+    
 
-    /* TODO: Lab7 driver. */
-}
+    acquire_spinlock(&sdlock);
+
+    // if write or buflist is not empty
+    if (flags == B_DIRTY || !try_fetch_task()) {
+        sd_start(b);
+        if (read) {
+
+        }
+    }
+    b->flags = B_VALID;
+
+    release_spinlock(&sdlock);
+}   
 
 /* SD card test and benchmark. */
 void sd_test() {
@@ -1310,7 +1325,6 @@ int sdInit() {
     if (resp == SD_OK) {
         // Card responded with voltage and check pattern.
         // Resolve voltage and check for high capacity card.
-        // FIXME:
         delay(50);
         if ((resp = sdAppSendOpCond(ACMD41_ARG_HC)))
             return sdDebugResponse(resp);

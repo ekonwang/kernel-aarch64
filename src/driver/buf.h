@@ -42,13 +42,20 @@ void init_sdbuf() {
 
 // Operation on buflist.
 
-buf *fetch_task() {
+buf *try_fetch_task() {
     acquire_buf_lock();
     buf *thisbuf = NULL;
     if (head.next != (ListNode *)&head) {
         thisbuf = (buf *)container_of(head.next, buf, listnode);
-        detach_from_list(head.next);
     }
+    release_buf_lock();
+    return thisbuf;
+}
+
+buf *fetch_task() {
+    buf *thisbuf = try_fetch_task();
+    acquire_buf_lock();
+    detach_from_list(&thisbuf->listnode);
     release_buf_lock();
     return thisbuf;
 }
