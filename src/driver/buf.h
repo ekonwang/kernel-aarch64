@@ -3,6 +3,7 @@
 #include <common/defines.h>
 #include <common/list.h>
 #include <common/string.h>
+#include <common/spinlock.h>
 
 #define BSIZE 512
 

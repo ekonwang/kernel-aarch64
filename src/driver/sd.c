@@ -21,7 +21,6 @@
 #include <driver/mbox.h>
 
 #include <common/defines.h>
-#include <common/spinlock.h>
 #include <core/proc.h>
 #include <driver/buf.h>
 #include <driver/clock.h>
