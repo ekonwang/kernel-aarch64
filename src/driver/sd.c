@@ -749,8 +749,8 @@ static int sdWaitForInterrupt(unsigned int mask) {
         // printf("EMMC_STATUS:%08x\nEMMC_INTERRUPT: %08x\nEMMC_RESP0 : %08x\nn", *EMMC_STATUS, *EMMC_INTERRUPT, *EMMC_RESP0);
 
         // Clear the interrupt register completely.
+        printf("[sdWaitForInterrupt] EMMC_INTERRUPT: %d\n", (u32)ival);
         *EMMC_INTERRUPT = (u32)ival;
-
         return SD_TIMEOUT;
     } else if (ival & INT_ERROR_MASK) {
         printf("* EMMC: Error waiting for interrupt: %x %x %x\n", *EMMC_STATUS, ival, *EMMC_RESP0);
@@ -838,11 +838,14 @@ static int sdSendCommandP(EMMCCommand *cmd, int arg) {
         sd_delayus((u32)cmd->delay);
 
     // Wait until command complete interrupt.
-    if ((result = sdWaitForInterrupt(INT_CMD_DONE)))
-        return result;
+    if ((result = sdWaitForInterrupt(INT_CMD_DONE))) {
+        printf("[result]: %d\n", result);
+        return result;   
+    }
 
     // Get response from RESP0.
     int resp0 = (int)*EMMC_RESP0;
+    printf("[resp0]: (%d)\n", resp0);
     // printf("EMMC: Sent command %08x:%s arg %d resp %08x\n",cmd->code,cmd->name,arg,resp0);
 
     // Handle response types.
@@ -859,6 +862,7 @@ static int sdSendCommandP(EMMCCommand *cmd, int arg) {
             // Store the card state.  Note that this is the state the card was in before the
             // command was accepted, not the new state.
             sdCard.cardState = (resp0 & ST_CARD_STATE) >> R1_CARD_STATE_SHIFT;
+            printf("[resp0 & (int)R1_ERRORS_MASK]: (%d)\n", resp0 & (int)R1_ERRORS_MASK);
             return resp0 & (int)R1_ERRORS_MASK;
 
             // RESP0..3 contains 128 bit CID or CSD shifted down by 8 bits as no CRC
@@ -955,16 +959,22 @@ static int sdSendCommand(int index) {
 static int sdSendCommandA(int index, int arg) {
     // Issue APP_CMD if needed.
     int resp;
-    if (index >= IX_APP_CMD_START && (resp = sdSendAppCommand()))
+    if (index >= IX_APP_CMD_START && (resp = sdSendAppCommand())) {
+        printf("[1] index: (%d)  resp: (%d)\n", index, resp);
         return sdDebugResponse(resp);
+    }
 
     // Get the command and pass the argument through.
-    if ((resp = sdSendCommandP(&sdCommandTable[index], arg)))
+    if ((resp = sdSendCommandP(&sdCommandTable[index], arg))) {
+        printf("[2] resp: (%d)\n", resp);
         return resp;
+    }
 
     // Check that APP_CMD was correctly interpreted.
-    if (index >= IX_APP_CMD_START && sdCard.rca && !(sdCard.status & ST_APP_CMD))
+    if (index >= IX_APP_CMD_START && sdCard.rca && !(sdCard.status & ST_APP_CMD)) {
+        printf("[3] index: (%d)\n", resp);
         return SD_ERROR_APP_CMD;
+    }
 
     return resp;
 }
