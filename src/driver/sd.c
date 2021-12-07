@@ -505,6 +505,7 @@ void sd_init() {
      * Initialize the lock and request queue if any.
      * Remember to call sd_init() at somewhere.
      */
+    sdInit();
     init_sdbuf();
     init_spinlock(&sdlock, "sdlock");
     set_interrupt_handler(IRQ_SDIO, sd_intr);
@@ -651,6 +652,7 @@ void sd_test() {
     printf("- sd check rw...\n");
     // Read/write test
     for (int i = 1; i < n; i++) {
+        printf("read/write test #%d\n", i);
         // Backup.
         b[0].flags = 0;
         b[0].blockno = (u32)i;
