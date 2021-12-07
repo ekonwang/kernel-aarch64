@@ -7,6 +7,7 @@
 #include <core/sched.h>
 #include <core/virtual_memory.h>
 #include <core/container.h>
+#include <driver/sd.h>
 
 extern void to_forkret();
 extern void trap_return();
@@ -85,6 +86,7 @@ void spawn_init_process() {
  */
 void forkret() {
 	/* : Lab3 Process */
+    sd_test();
 }
 
 /*
@@ -183,4 +185,34 @@ void add_loop_test(int times) {
 
         release_sched_lock();
     }
+}
+
+/* Initialize new user program to test SD driver */
+void add_sd_test() {
+    struct proc *p;
+    extern char sdtest_start[], sdtest_end[];
+    u64 cpsize = (u64)(sdtest_end - sdtest_start), tmpsize;
+    PTEntriesPtr PagePtr;
+    p = alloc_proc();
+    
+    acquire_sched_lock();
+    if (p == NULL) 
+        PANIC("Could not allocate init process");
+    if ((p->pgdir = pgdir_init()) == NULL)
+        PANIC("Could not initialize root pagetable");
+    printf("Root page table of process p : %p\n", p->pgdir);
+    for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
+        PagePtr = kalloc();
+        if (PagePtr == NULL) 
+            PANIC("kalloc failed");
+        tmpsize = (cpsize-vplace > PAGE_SIZE)? PAGE_SIZE : (cpsize-vplace);
+        uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
+        memcpy(PagePtr, sdtest_start + vplace, tmpsize);
+    }
+    
+    p -> state = RUNNABLE;
+    p -> sz = PAGE_SIZE;
+    p -> context -> r30 = (u64)to_forkret;
+
+    release_sched_lock();
 }

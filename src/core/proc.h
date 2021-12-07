@@ -60,3 +60,4 @@ NO_RETURN void exit();
 void sleep(void *chan, SpinLock *lock);
 void wakeup(void *chan);
 void add_loop_test(int times);
+void add_sd_test(); /* lab7: sd driver */
