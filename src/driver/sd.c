@@ -627,11 +627,11 @@ void sdrw(struct buf *b) {
     if (flags == B_VALID)
         return;
 
-    add_task(b);
     acquire_spinlock(&sdlock);
     if (!try_fetch_task()) {
         sd_start(b, false);
     }
+    add_task(b);
     release_spinlock(&sdlock);
 
     sleep(b, NULL);
