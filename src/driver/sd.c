@@ -525,6 +525,38 @@ static void sd_delayus(u32 c) {
     delayus(c * 3);
 }
 
+/* Start data transfer for b. */
+static void sd_doit(buf *b) {
+    int write = b->flags & B_DIRTY;
+
+    int done = 0, resp;
+
+    u32 *intbuf = (u32 *)b->data;
+    asserts((((i64)b->data) & 0x03) == 0, "Only support word-aligned buffers. ");
+
+    if (write) {
+        // Wait for ready interrupt for the next block.
+        if ((resp = sdWaitForInterrupt(INT_WRITE_RDY))) {
+            printf("\n[sd_start] sdWaitForInterrupt resp: %x\n", resp);
+            PANIC("* EMMC ERROR: Timeout waiting for ready to write\n");
+            // return sdDebugResponse(resp);
+        }
+        asserts(!*EMMC_INTERRUPT, "%d ", *EMMC_INTERRUPT);
+        while (done < 128)
+            *EMMC_DATA = intbuf[done++];
+    }
+
+    else {
+        if ((resp = sdWaitForInterrupt(INT_READ_RDY))) {
+            printf("\n[sd_start] sdWaitForInterrupt resp: %x\n", resp);
+            PANIC("* EMMC ERROR: Timeout waiting for ready to read\n");
+        }
+        asserts(!*EMMC_INTERRUPT, "%d ", *EMMC_INTERRUPT);
+        while (done < 128)
+            intbuf[done++] = *EMMC_DATA;
+    }
+}
+
 /* Start the request for b. Caller must hold sdlock. */
 static void sd_start(struct buf *b, bool Transfer) {
     // Address is different depending on the card type.
@@ -556,25 +588,19 @@ static void sd_start(struct buf *b, bool Transfer) {
     u32 *intbuf = (u32 *)b->data;
     asserts((((i64)b->data) & 0x03) == 0, "Only support word-aligned buffers. ");
 
-    if (write && Transfer) {
-        // Wait for ready interrupt for the next block.
-        if ((resp = sdWaitForInterrupt(INT_WRITE_RDY))) {
-            PANIC("* EMMC ERROR: Timeout waiting for ready to write\n");
-            // return sdDebugResponse(resp);
-        }
-        asserts(!*EMMC_INTERRUPT, "%d ", *EMMC_INTERRUPT);
-        while (done < 128)
-            *EMMC_DATA = intbuf[done++];
-    }
+    if (Transfer)
+        sd_doit(b);
 
-    else if (Transfer) {
-        if ((resp = sdWaitForInterrupt(INT_READ_RDY))) {
-            PANIC("* EMMC ERROR: Timeout waiting for ready to read\n");
-        }
-        asserts(!*EMMC_INTERRUPT, "%d ", *EMMC_INTERRUPT);
-        while (done < 128)
-            intbuf[done++] = *EMMC_DATA;
+    printf("\n[sd_start] end\n");
+}
+
+static void sd_waitdone(buf *b) {
+    int resp;
+    if ((resp = sdWaitForInterrupt(INT_DATA_DONE))) {
+        PANIC("* EMMC ERROR: Timeout waiting for ready to read\n");
     }
+    b->flags = B_VALID;
+    wakeup(b);
 }
 
 /* The interrupt handler. */
@@ -601,16 +627,16 @@ void sd_intr() {
     acquire_spinlock(&sdlock);
     disb();
     printf("\n[sd_intr] entry, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
-    *EMMC_INTERRUPT = *EMMC_INTERRUPT;
+
+    int resp;
+    b = fetch_task();
+    sd_doit(b);
+    sd_waitdone(b);
+    disb();
 
     while(b = fetch_task()) {
-        int write = b->flags & B_DIRTY, resp;
         sd_start(b, true);
-        if ((resp = sdWaitForInterrupt(INT_DATA_DONE))) {
-            PANIC("* EMMC ERROR: Timeout waiting for ready to read\n");
-        }
-        b->flags = B_VALID;
-        wakeup(b);
+        sd_waitdone(b);
     }
 
     disb();
@@ -760,7 +786,7 @@ static int sdWaitForInterrupt(unsigned int mask) {
         // printf("EMMC_STATUS:%08x\nEMMC_INTERRUPT: %08x\nEMMC_RESP0 : %08x\nn", *EMMC_STATUS, *EMMC_INTERRUPT, *EMMC_RESP0);
 
         // Clear the interrupt register completely.
-        printf("[sdWaitForInterrupt] EMMC_INTERRUPT: %d\n", (u32)ival);
+        printf("\n[sdWaitForInterrupt] EMMC_INTERRUPT: %d\n", (u32)ival);
         *EMMC_INTERRUPT = (u32)ival;
         return SD_TIMEOUT;
     } else if (ival & INT_ERROR_MASK) {
@@ -971,19 +997,19 @@ static int sdSendCommandA(int index, int arg) {
     // Issue APP_CMD if needed.
     int resp;
     if (index >= IX_APP_CMD_START && (resp = sdSendAppCommand())) {
-        printf("[1] index: (%d)  resp: (%d)\n", index, resp);
+        printf("\n[sdSendCommandA](1) index: (%d)  resp: (%d)\n", index, resp);
         return sdDebugResponse(resp);
     }
 
     // Get the command and pass the argument through.
     if ((resp = sdSendCommandP(&sdCommandTable[index], arg))) {
-        printf("[2] resp: (%d)\n", resp);
+        printf("\n[sdSendCommandA](2) resp: (%d)\n", resp);
         return resp;
     }
 
     // Check that APP_CMD was correctly interpreted.
     if (index >= IX_APP_CMD_START && sdCard.rca && !(sdCard.status & ST_APP_CMD)) {
-        printf("[3] index: (%d)\n", resp);
+        printf("\n[sdSendCommandA](3) index: (%d)\n", resp);
         return SD_ERROR_APP_CMD;
     }
 
