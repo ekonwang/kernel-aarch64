@@ -59,7 +59,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
             acquire_ptable_lock(this);
             proc *p = &this->ptable.proc[i];
             if (p->state == RUNNABLE) {
-                printf("\n  ≤≤≤ [scheduler]: process id (pid:%d)[%p] takes the cpu %d\n", p->pid, p, cpuid());
+                // printf("\n  ≤≤≤ [scheduler]: process id (pid:%d)[%p] takes the cpu %d\n", p->pid, p, cpuid());
                 has_run = 1;
                 uvm_switch(p -> pgdir);
                 if (!p->is_scheduler)
@@ -125,7 +125,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
 static void sched_simple(struct scheduler *this) {
     struct cpu *c = thiscpu();
     proc * p = c->proc;
-    printf("\n  ≥≥≥ [sched]: (cpu %d), process: %p\n", cpuid(), p);
+    // printf("\n  ≥≥≥ [sched]: (cpu %d), process: %p\n", cpuid(), p);
     c->proc = ((container *)this->cont)->p;
     // printf("  ≥≥≥ sched: sched to %p\n", c->proc);
     if (p->is_scheduler) 

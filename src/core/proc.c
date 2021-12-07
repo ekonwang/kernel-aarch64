@@ -112,7 +112,7 @@ void yield() {
     struct cpu *c = thiscpu();
     proc *p = c->proc;
     p->state = RUNNABLE;
-    printf("\n[yield] p : %p\n", p);
+    // printf("\n[yield] p : %p\n", p);
     sched();
 }
 
@@ -123,7 +123,8 @@ void yield() {
 void sleep(void *chan, SpinLock *lock) {
     proc *p = thiscpu() -> proc;
     p -> state = SLEEPING;
-    printf("\n[sleep] process(pid = %d)[%p]\n", p->pid, p);
+    p -> chan = chan;
+    // printf("\n[sleep] process(pid = %d)[%p]\n", p->pid, p);
     if (lock) {
         acquire_spinlock(lock);
     }
