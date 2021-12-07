@@ -70,6 +70,7 @@ NORETURN void main() {
         add_sd_test();
         enter_scheduler();
     } else {
+        
         enter_scheduler();
     }
 
