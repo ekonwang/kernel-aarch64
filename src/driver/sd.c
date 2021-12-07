@@ -597,7 +597,9 @@ void sd_intr() {
      * sdWaitForInterrupt() to complete this function.
      */
     buf *b = NULL;
+    disb();
     acquire_spinlock(&sdlock);
+    disb();
     printf("\n[sd_intr] entry, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
     *EMMC_INTERRUPT = *EMMC_INTERRUPT;
 
@@ -611,6 +613,7 @@ void sd_intr() {
         wakeup(b);
     }
 
+    disb();
     release_spinlock(&sdlock);
 }
 
@@ -629,12 +632,17 @@ void sdrw(struct buf *b) {
     if (flags == B_VALID)
         return;
 
+    disb();
     acquire_spinlock(&sdlock);
+    disb();
+
     if (!try_fetch_task()) {
         sd_start(b, false);
     }
     add_task(b);
+    disb();
     release_spinlock(&sdlock);
+    disb();
 
     sleep(b, NULL);
     asserts(b->flags & B_VALID, "flag should be valid after being waken.");
@@ -653,7 +661,7 @@ void sd_test() {
     printf("- sd check rw...\n");
     // Read/write test
     for (int i = 1; i < n; i++) {
-        printf("read/write test #%d\n", i);
+        printf("\n[sd_test] read/write test #%d\n", i);
         // Backup.
         b[0].flags = 0;
         b[0].blockno = (u32)i;
