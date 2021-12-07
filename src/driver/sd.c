@@ -548,6 +548,7 @@ static void sd_start(struct buf *b, bool Transfer) {
     *EMMC_BLKSIZECNT = 512;
 
     if ((resp = sdSendCommandA(cmd, bno))) {
+        printf("\n[sd_start] resp: %d\n", resp);
         PANIC("* EMMC send command error.");
     }
 
@@ -597,7 +598,7 @@ void sd_intr() {
      */
     buf *b = NULL;
     acquire_spinlock(&sdlock);
-    printf("sd_intr entry, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
+    printf("\n[sd_intr] entry, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
     *EMMC_INTERRUPT = *EMMC_INTERRUPT;
 
     while(b = fetch_task()) {

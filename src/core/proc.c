@@ -64,7 +64,7 @@ void spawn_init_process() {
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
-    printf("Root page table of process p : %p\n", p->pgdir);
+    printf("[spawn_init_process] Root page table of process p : %p\n", p->pgdir);
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
         PagePtr = kalloc();
         if (PagePtr == NULL) 
@@ -200,7 +200,7 @@ void add_sd_test() {
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
-    printf("Root page table of process p : %p\n", p->pgdir);
+    printf("\n[add_sd_test] Root page table of process p : %p\n", p->pgdir);
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
         PagePtr = kalloc();
         if (PagePtr == NULL) 
@@ -230,7 +230,7 @@ void add_sd_loop() {
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
-    printf("Root page table of process p : %p\n", p->pgdir);
+    printf("\n[add_sd_loop] Root page table of process p : %p\n", p->pgdir);
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
         PagePtr = kalloc();
         if (PagePtr == NULL) 
