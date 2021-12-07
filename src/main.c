@@ -67,6 +67,7 @@ NORETURN void main() {
         // spawn_init_process();
         // add_loop_test(1);
         // container_test_init();
+        add_sd_test();
         enter_scheduler();
     } else {
         enter_scheduler();
