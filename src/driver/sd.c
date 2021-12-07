@@ -591,7 +591,7 @@ static void sd_start(struct buf *b, bool Transfer) {
     if (Transfer)
         sd_doit(b);
 
-    printf("\n[sd_start] end\n");
+    printf("\n[sd_start] b:(%p) end\n", b);
 }
 
 static void sd_waitdone(buf *b) {
@@ -644,6 +644,7 @@ void sd_intr() {
         printf("\n[sd_intr] do more, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
     }
     printf("\n[sd_intr] hello\n");
+    asserts(!*EMMC_INTERRUPT, "[sd_intr] Interrupt should zero");
     disb();
     release_spinlock(&sdlock);
     yield();
@@ -659,7 +660,8 @@ void sdrw(struct buf *b) {
      * Add to the list, if list is empty, then use sd_start
      * then sleep, use loop to check whether buf flag is modified, if modified, then break 
      */
-
+    printf("\n[sdrw] b(%p)\n", b);
+    asserts(!*EMMC_INTERRUPT, "emmc interrupt flag should be empty: 0x%x. ", *EMMC_INTERRUPT);
     int flags = b->flags, read = !(b->flags);
     if (flags == B_VALID)
         return;
@@ -699,6 +701,8 @@ void sd_test() {
         b[0].blockno = (u32)i;
 
         sdrw(&b[0]);
+        b[i].flags = 0;
+        sdrw(&b[i]);
         // Write some value.
         b[i].flags = B_DIRTY;
         b[i].blockno = (u32)i;

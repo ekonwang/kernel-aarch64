@@ -124,7 +124,7 @@ void sleep(void *chan, SpinLock *lock) {
     proc *p = thiscpu() -> proc;
     p -> state = SLEEPING;
     p -> chan = chan;
-    // printf("\n[sleep] process(pid = %d)[%p]\n", p->pid, p);
+    printf("\n[sleep] process(pid = %d)[%p]\n", p->pid, p);
     if (lock) {
         acquire_spinlock(lock);
     }
