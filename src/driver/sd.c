@@ -630,17 +630,23 @@ void sd_intr() {
 
     int resp;
     b = fetch_task();
+    printf("\n[sd_intr] b: %p\n", b);
     sd_doit(b);
     sd_waitdone(b);
     disb();
+    printf("\n[sd_intr] do once, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
 
-    while(b = fetch_task()) {
+    b = fetch_task();
+    printf("\n[sd_intr] b: %p\n", b);
+    while(b != NULL) {
         sd_start(b, true);
         sd_waitdone(b);
+        printf("\n[sd_intr] do more, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
     }
-
+    printf("\n[sd_intr] hello\n");
     disb();
     release_spinlock(&sdlock);
+    yield();
 }
 
 /*

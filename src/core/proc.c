@@ -112,6 +112,7 @@ void yield() {
     struct cpu *c = thiscpu();
     proc *p = c->proc;
     p->state = RUNNABLE;
+    printf("\n[yield] p : %p\n", p);
     sched();
 }
 
