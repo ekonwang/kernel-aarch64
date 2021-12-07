@@ -4,6 +4,11 @@ to_forkret:
      bl forkret
      b trap_return
 
+.global to_sdtest
+to_sdtest:
+     bl sd_test
+     b trap_return
+
 .global trap_entry
 trap_entry:
      /* use `stp`/`ldp` in favor of `str`/`ldr` to maintain stack alignment. */
