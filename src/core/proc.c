@@ -134,12 +134,10 @@ static void rec_wakeup(void *chan, struct scheduler *this) {
     for (int i = 0; i < NPROC; i++) 
     {
         proc *p = &this->ptable.proc[i];
-        acquire_spinlock(&this->ptable.lock);
         if (p->state == SLEEPING && p->chan == chan) 
         {
             p->state = RUNNABLE;
         }
-        release_spinlock(&this->ptable.lock);
         if (p->is_scheduler) 
         {
             rec_wakeup(chan, &((container *)(p->cont))->scheduler);
@@ -200,7 +198,7 @@ void add_sd_test() {
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
-    printf("\n[add_sd_test] Root page table of process p : %p\n", p->pgdir);
+    printf("\n[add_sd_test] p : %p\n", p);
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
         PagePtr = kalloc();
         if (PagePtr == NULL) 
@@ -230,7 +228,7 @@ void add_sd_loop() {
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
-    printf("\n[add_sd_loop] Root page table of process p : %p\n", p->pgdir);
+    printf("\n[add_sd_loop] p : %p\n", p);
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
         PagePtr = kalloc();
         if (PagePtr == NULL) 
