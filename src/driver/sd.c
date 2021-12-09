@@ -528,9 +528,7 @@ static void sd_delayus(u32 c) {
 /* Start data transfer for b. */
 static void sd_doit(buf *b) {
     int write = b->flags & B_DIRTY;
-
     int done = 0, resp;
-
     u32 *intbuf = (u32 *)b->data;
     asserts((((i64)b->data) & 0x03) == 0, "Only support word-aligned buffers. ");
 
@@ -575,7 +573,6 @@ static void sd_start(struct buf *b, bool Transfer) {
 
     // Work out the status, interrupt and command values for the transfer.
     int cmd = write ? IX_WRITE_SINGLE : IX_READ_SINGLE;
-
     int resp;
     *EMMC_BLKSIZECNT = 512;
 
@@ -584,13 +581,9 @@ static void sd_start(struct buf *b, bool Transfer) {
         PANIC("* EMMC send command error.");
     }
 
-    int done = 0;
-    u32 *intbuf = (u32 *)b->data;
     asserts((((i64)b->data) & 0x03) == 0, "Only support word-aligned buffers. ");
-
     if (Transfer)
         sd_doit(b);
-
     // printf("\n[sd_start] b:(%p) end\n", b);
 }
 
@@ -628,19 +621,23 @@ void sd_intr() {
     disb();
     // printf("\n[sd_intr] entry, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
 
-    int resp;
+    int read;
     b = fetch_task();
+    assert(b->flags != B_VALID);
+    read = !b->flags;
     printf("\n[sd_intr] b: %p\n", b);
-    sd_doit(b);
+    if (read)
+        sd_doit(b);
     sd_waitdone(b);
     disb();
     // printf("\n[sd_intr] do once, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
-
     b = fetch_task();
+
     // printf("\n[sd_intr] b: %p\n", b);
     while(b != NULL) {
         sd_start(b, true);
         sd_waitdone(b);
+        b = fetch_task();
         // printf("\n[sd_intr] do more, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
     }
     // printf("\n[sd_intr] hello\n");
@@ -662,7 +659,7 @@ void sdrw(struct buf *b) {
      */
     printf("\n[sdrw] b(%p)\n", b);
     asserts(!*EMMC_INTERRUPT, "emmc interrupt flag should be empty: 0x%x. ", *EMMC_INTERRUPT);
-    int flags = b->flags, read = !(b->flags);
+    int flags = b->flags, read = !flags;
     if (flags == B_VALID)
         return;
 
@@ -671,7 +668,10 @@ void sdrw(struct buf *b) {
     disb();
 
     if (!try_fetch_task()) {
-        sd_start(b, false);
+        if (read)
+            sd_start(b, false);
+        else 
+            sd_start(b, true);
     }
     add_task(b);
     disb();
@@ -701,8 +701,6 @@ void sd_test() {
         b[0].blockno = (u32)i;
 
         sdrw(&b[0]);
-        b[i].flags = 0;
-        sdrw(&b[i]);
         // Write some value.
         b[i].flags = B_DIRTY;
         b[i].blockno = (u32)i;
