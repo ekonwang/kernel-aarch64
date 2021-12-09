@@ -18,6 +18,7 @@ extern void add_loop_test(int times);
  */
 static NO_RETURN void container_entry() {
     add_loop_test(3);
+    printf("add loop test [%d]\n", cpuid());
     thiscpu()->scheduler->op->scheduler(thiscpu()->scheduler);
 
 	/* container_entry should enter scheduler and should not return */
