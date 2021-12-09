@@ -537,7 +537,7 @@ static void sd_doit(buf *b) {
     if (write) {
         // Wait for ready interrupt for the next block.
         if ((resp = sdWaitForInterrupt(INT_WRITE_RDY))) {
-            printf("\n[sd_start] sdWaitForInterrupt resp: %x\n", resp);
+            // printf("\n[sd_start] sdWaitForInterrupt resp: %x\n", resp);
             PANIC("* EMMC ERROR: Timeout waiting for ready to write\n");
             // return sdDebugResponse(resp);
         }
@@ -548,7 +548,7 @@ static void sd_doit(buf *b) {
 
     else {
         if ((resp = sdWaitForInterrupt(INT_READ_RDY))) {
-            printf("\n[sd_start] sdWaitForInterrupt resp: %x\n", resp);
+            // printf("\n[sd_start] sdWaitForInterrupt resp: %x\n", resp);
             PANIC("* EMMC ERROR: Timeout waiting for ready to read\n");
         }
         asserts(!*EMMC_INTERRUPT, "%d ", *EMMC_INTERRUPT);
@@ -580,7 +580,7 @@ static void sd_start(struct buf *b, bool Transfer) {
     *EMMC_BLKSIZECNT = 512;
 
     if ((resp = sdSendCommandA(cmd, bno))) {
-        printf("\n[sd_start] resp: %d\n", resp);
+        // printf("\n[sd_start] resp: %d\n", resp);
         PANIC("* EMMC send command error.");
     }
 
@@ -591,7 +591,7 @@ static void sd_start(struct buf *b, bool Transfer) {
     if (Transfer)
         sd_doit(b);
 
-    printf("\n[sd_start] b:(%p) end\n", b);
+    // printf("\n[sd_start] b:(%p) end\n", b);
 }
 
 static void sd_waitdone(buf *b) {
@@ -626,7 +626,7 @@ void sd_intr() {
     disb();
     acquire_spinlock(&sdlock);
     disb();
-    printf("\n[sd_intr] entry, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
+    // printf("\n[sd_intr] entry, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
 
     int resp;
     b = fetch_task();
@@ -634,16 +634,16 @@ void sd_intr() {
     sd_doit(b);
     sd_waitdone(b);
     disb();
-    printf("\n[sd_intr] do once, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
+    // printf("\n[sd_intr] do once, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
 
     b = fetch_task();
-    printf("\n[sd_intr] b: %p\n", b);
+    // printf("\n[sd_intr] b: %p\n", b);
     while(b != NULL) {
         sd_start(b, true);
         sd_waitdone(b);
-        printf("\n[sd_intr] do more, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
+        // printf("\n[sd_intr] do more, EMMC_INTERRUPT: %x\n", *EMMC_INTERRUPT);
     }
-    printf("\n[sd_intr] hello\n");
+    // printf("\n[sd_intr] hello\n");
     asserts(!*EMMC_INTERRUPT, "[sd_intr] Interrupt should zero");
     disb();
     release_spinlock(&sdlock);
@@ -796,7 +796,7 @@ static int sdWaitForInterrupt(unsigned int mask) {
         // printf("EMMC_STATUS:%08x\nEMMC_INTERRUPT: %08x\nEMMC_RESP0 : %08x\nn", *EMMC_STATUS, *EMMC_INTERRUPT, *EMMC_RESP0);
 
         // Clear the interrupt register completely.
-        printf("\n[sdWaitForInterrupt] EMMC_INTERRUPT: %d\n", (u32)ival);
+        // printf("\n[sdWaitForInterrupt] EMMC_INTERRUPT: %d\n", (u32)ival);
         *EMMC_INTERRUPT = (u32)ival;
         return SD_TIMEOUT;
     } else if (ival & INT_ERROR_MASK) {
@@ -886,13 +886,13 @@ static int sdSendCommandP(EMMCCommand *cmd, int arg) {
 
     // Wait until command complete interrupt.
     if ((result = sdWaitForInterrupt(INT_CMD_DONE))) {
-        printf("[result]: %d\n", result);
+        // printf("[result]: %d\n", result);
         return result;   
     }
 
     // Get response from RESP0.
     int resp0 = (int)*EMMC_RESP0;
-    printf("[resp0]: (%d)\n", resp0);
+    // printf("[resp0]: (%d)\n", resp0);
     // printf("EMMC: Sent command %08x:%s arg %d resp %08x\n",cmd->code,cmd->name,arg,resp0);
 
     // Handle response types.
@@ -909,7 +909,7 @@ static int sdSendCommandP(EMMCCommand *cmd, int arg) {
             // Store the card state.  Note that this is the state the card was in before the
             // command was accepted, not the new state.
             sdCard.cardState = (resp0 & ST_CARD_STATE) >> R1_CARD_STATE_SHIFT;
-            printf("[resp0 & (int)R1_ERRORS_MASK]: (%d)\n", resp0 & (int)R1_ERRORS_MASK);
+            // printf("[resp0 & (int)R1_ERRORS_MASK]: (%d)\n", resp0 & (int)R1_ERRORS_MASK);
             return resp0 & (int)R1_ERRORS_MASK;
 
             // RESP0..3 contains 128 bit CID or CSD shifted down by 8 bits as no CRC

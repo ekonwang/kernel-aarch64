@@ -8,9 +8,9 @@ void init_sdbuf() {
 buf *try_fetch_task() {
     acquire_buf_lock();
     buf *thisbuf = NULL;
-    printf("\n[try_fetch_task] &head: %p\n", &head);
+    // printf("\n[try_fetch_task] &head: %p\n", &head);
     if (head.next != (ListNode *)&head) {
-        printf("\n[try_fetch_task] head.next: %p\n", head.next);
+        // printf("\n[try_fetch_task] head.next: %p\n", head.next);
         thisbuf = (buf *)container_of(head.next, buf, listnode);
     }
     release_buf_lock();
@@ -21,7 +21,7 @@ buf *fetch_task() {
     buf *thisbuf = try_fetch_task();
     if (thisbuf) {
         acquire_buf_lock();
-        printf("\n[fetch] detaching &thisbuf->listnode: %p\n", &thisbuf->listnode);
+        // printf("\n[fetch] detaching &thisbuf->listnode: %p\n", &thisbuf->listnode);
         detach_from_list(&thisbuf->listnode);
         release_buf_lock();
     }
