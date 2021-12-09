@@ -50,7 +50,7 @@ struct proc {
     char name[16];           /* Process name (debugging)                */
     void *cont;
     bool is_scheduler;
-	
+	SpinLock lock;
 };
 typedef struct proc proc;
 void init_proc();

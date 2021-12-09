@@ -40,6 +40,9 @@ struct container *alloc_container(bool root) {
     cont->scheduler.pid = 1;
     init_spinlock(&cont->scheduler.ptable.lock, "ptable");
     init_spinlock(&cont->lock, "container");
+    for (int i=0; i<NPROC; i++) {
+        init_spinlock(&(cont->scheduler.ptable.proc[i].lock), "process");
+    }
     if (root)
         return cont;
     cont->p = alloc_pcb();
@@ -105,12 +108,12 @@ void *alloc_resource(struct container *this, struct proc *p, resource_t resource
  */
 struct container *spawn_container(struct container *this, struct sched_op *op) {
     container *cont = alloc_container(false);
-    acquire_sched_lock();
+    acquire_spinlock(&(cont->p->lock));
     cont->p->state = RUNNABLE;
     cont->p->sz = PAGE_SIZE * NCPU;
     cont->parent = this;
     cont->scheduler.parent = &this->scheduler;
-    release_sched_lock();
+    release_spinlock(&(cont->p->lock));
     return cont;
 }
 

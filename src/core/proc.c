@@ -29,7 +29,7 @@ static struct proc *alloc_proc() {
     p = alloc_pcb();
     char* stack = kalloc();
 
-    acquire_sched_lock();
+    acquire_spinlock(&p->lock);
     p -> kstack = stack;
     stack += KSTACKSIZE;
     stack -= sizeof(*(p->tf));
@@ -38,7 +38,7 @@ static struct proc *alloc_proc() {
     stack -= sizeof(*(p->context));
     memset(stack, 0, sizeof(*(p->context)));
     p -> context = (struct context *)stack;
-    release_sched_lock();
+    release_spinlock(&p->lock);
 
     return p;
 }
@@ -59,7 +59,7 @@ void spawn_init_process() {
     PTEntriesPtr PagePtr;
     p = alloc_proc();
     
-    acquire_sched_lock();
+    acquire_spinlock(&p->lock);
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
@@ -78,7 +78,7 @@ void spawn_init_process() {
     p -> sz = PAGE_SIZE;
     p -> context -> r30 = (u64)to_forkret;
 
-    release_sched_lock();
+    release_spinlock(&p->lock);
 }
 
 /*
@@ -165,7 +165,7 @@ void add_loop_test(int times) {
         PTEntriesPtr PagePtr;
         p = alloc_proc();
 
-        acquire_sched_lock();
+        acquire_spinlock(&p->lock);
         if (p == NULL) 
             PANIC("Could not allocate init process");
         if ((p->pgdir = pgdir_init()) == NULL)
@@ -183,7 +183,7 @@ void add_loop_test(int times) {
         p -> sz = PAGE_SIZE;
         p -> context -> r30 = (u64)to_forkret;
 
-        release_sched_lock();
+        release_spinlock(&p->lock);
     }
 }
 
@@ -195,7 +195,7 @@ void add_sd_test() {
     PTEntriesPtr PagePtr;
     p = alloc_proc();
     
-    acquire_sched_lock();
+    acquire_spinlock(&p->lock);
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
@@ -214,7 +214,7 @@ void add_sd_test() {
     p -> sz = PAGE_SIZE;
     p -> context -> r30 = (u64)to_sdtest;
 
-    release_sched_lock();
+    release_spinlock(&p->lock);
 }
 
 /* Initialize new user program to test SD driver */
@@ -225,7 +225,7 @@ void add_sd_loop() {
     PTEntriesPtr PagePtr;
     p = alloc_proc();
     
-    acquire_sched_lock();
+    acquire_spinlock(&p->lock);
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
@@ -244,5 +244,5 @@ void add_sd_loop() {
     p -> sz = PAGE_SIZE;
     p -> context -> r30 = (u64)to_forkret;
 
-    release_sched_lock();
+    release_spinlock(&p->lock);
 }
