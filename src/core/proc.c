@@ -99,7 +99,7 @@ void exit() {
     proc * p = thiscpu() -> proc;
     p -> state = ZOMBIE;
     // release_sched_lock();
-    printf("process %p at exit.\n", p);
+    printf("process (pid = %d) at exit.\n", p->pid);
     sched();
     PANIC("ERROR: ZOMBIE trying exit.");
 }
@@ -124,12 +124,12 @@ void sleep(void *chan, SpinLock *lock) {
     proc *p = thiscpu() -> proc;
     p -> state = SLEEPING;
     p -> chan = chan;
-    printf("\n[sleep] process(pid = %d)[%p]\n", p->pid, p);
+    // printf("\n[sleep] process(pid = %d)[%p]\n", p->pid, p);
     if (lock) {
         acquire_spinlock(lock);
     }
     sched();
-    printf("\n[wakeup] process(pid = %d)[%p] wake up.\n", p->pid, p);
+    // printf("\n[sleep] chan[%p] process(pid = %d)[%p] wake up.\n", chan, p->pid, p);
 }
 
 static void rec_wakeup(void *chan, struct scheduler *this) {
@@ -149,6 +149,7 @@ static void rec_wakeup(void *chan, struct scheduler *this) {
 
 /* Wake up all processes sleeping on chan. */
 void wakeup(void *chan) {
+    // printf("\n[wake] chan:[%p]\n", chan);
     struct cpu *c = thiscpu();
     rec_wakeup(chan, &root_container->scheduler);
 }

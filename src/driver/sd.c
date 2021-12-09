@@ -625,7 +625,7 @@ void sd_intr() {
     b = fetch_task();
     assert(b->flags != B_VALID);
     read = !b->flags;
-    printf("\n[sd_intr] b: %p\n", b);
+    // printf("\n[sd_intr] b: %p\n", b);
     if (read)
         sd_doit(b);
     sd_waitdone(b);
@@ -657,7 +657,7 @@ void sdrw(struct buf *b) {
      * Add to the list, if list is empty, then use sd_start
      * then sleep, use loop to check whether buf flag is modified, if modified, then break 
      */
-    printf("\n[sdrw] b(%p)\n", b);
+    // printf("\n[sdrw] b(%p)\n", b);
     asserts(!*EMMC_INTERRUPT, "emmc interrupt flag should be empty: 0x%x. ", *EMMC_INTERRUPT);
     int flags = b->flags, read = !flags;
     if (flags == B_VALID)
@@ -695,7 +695,7 @@ void sd_test() {
     printf("- sd check rw...\n");
     // Read/write test
     for (int i = 1; i < n; i++) {
-        printf("\n[sd_test] read/write test #%d\n", i);
+        // printf("\n[sd_test] read/write test #%d reading 0th block\n", i);
         // Backup.
         b[0].flags = 0;
         b[0].blockno = (u32)i;
@@ -706,19 +706,23 @@ void sd_test() {
         b[i].blockno = (u32)i;
         for (int j = 0; j < BSIZE; j++)
             b[i].data[j] = (u8)((i * j) & 0xFF);
+        // printf("\n[sd_test] read/write test #%d reading %dth block\n", i, i);
         sdrw(&b[i]);
 
         memset(b[i].data, 0, sizeof(b[i].data));
         // Read back and check
         b[i].flags = 0;
+        // printf("\n[sd_test] read/write test #%d checking %dth block\n", i, i);
         sdrw(&b[i]);
         for (int j = 0; j < BSIZE; j++) {
             assert(b[i].data[j] == (i * j & 0xFF));
         }
         // Restore previous value.
         b[0].flags = B_DIRTY;
+        // printf("\n[sd_test] read/write test #%d restoring 0th block\n", i, i);
         sdrw(&b[0]);
     }
+    // exit();
 
     // Read benchmark
     disb();

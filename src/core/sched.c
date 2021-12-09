@@ -58,6 +58,11 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
             struct cpu *c = thiscpu();
             proc *p = &this->ptable.proc[i];
             if (try_acquire_spinlock(&(p->lock))) {
+                if (p->pid == 2 && cpuid()!=0) {
+                    release_spinlock(&(p->lock));
+                    continue;
+                }
+                
                 if (p->state == RUNNABLE) {
                     // printf("\n  ≤≤≤ [scheduler]: process id (pid:%d)[%p] takes the cpu %d\n", p->pid, p, cpuid());
                     has_run = 1;
@@ -128,7 +133,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
 static void sched_simple(struct scheduler *this) {
     struct cpu *c = thiscpu();
     proc * p = c->proc;
-    // printf("\n  ≥≥≥ [sched]: (cpu %d), process: %p\n", cpuid(), p);
+    // printf("\n  ≥≥≥ [sched]: (cpu %d), process: %p yield cpu\n", cpuid(), p);
     c->proc = ((container *)this->cont)->p;
     // printf("  ≥≥≥ sched: sched to %p\n", c->proc);
     if (p->is_scheduler) 
