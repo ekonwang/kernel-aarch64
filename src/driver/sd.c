@@ -517,7 +517,6 @@ void sd_init() {
      * Hint: Maybe need to use sd_start for reading, and
      * sdWaitForInterrupt for clearing certain interrupt.
      */
-    
 }
 
 static void sd_delayus(u32 c) {
@@ -684,6 +683,20 @@ void sdrw(struct buf *b) {
 
 /* SD card test and benchmark. */
 void sd_test() {
+    buf mbr;
+    mbr.flags = (int)0;
+    mbr.blockno = (u32)0;
+    sdrw(&mbr);
+    printf("\n \
+==> SD initialization \
+\n \
+[LBA of first absolute sector in the partition] : %d\
+\n \
+[Number of sectors in partition] : %d\n\n"\
+, (int)(&mbr.data + 0x1ce + 0x8), (int)(&mbr.data + 0x1ce + 0xc));
+
+
+    sd_init();
     static struct buf b[1 << 11];
     int n = sizeof(b) / sizeof(b[0]);
     int mb = (n * BSIZE) >> 20;
