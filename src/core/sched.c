@@ -58,7 +58,7 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
             struct cpu *c = thiscpu();
             proc *p = &this->ptable.proc[i];
             if (try_acquire_spinlock(&(p->lock))) {
-                if (p->pid == 1 && cpuid()!=0) {
+                if (p->bounding && !(p->bounding & (1 << cpuid()))) {
                     release_spinlock(&(p->lock));
                     continue;
                 }

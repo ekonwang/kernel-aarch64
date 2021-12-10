@@ -51,6 +51,7 @@ struct proc {
     void *cont;
     bool is_scheduler;
 	SpinLock lock;
+	u64 bounding;
 };
 typedef struct proc proc;
 void init_proc();

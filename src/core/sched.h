@@ -157,4 +157,10 @@ static INLINE void acquire_sched_lock() {
 static INLINE void release_sched_lock() {
     thiscpu()->scheduler->op->release_lock(thiscpu()->scheduler);
 }
+
+static INLINE void bound_processor(proc *p, u64 cpuid) {
+    p->bounding = (u64)0;
+    asserts(cpuid < NCPU, "bounding a processor exceeding limit [%d]", cpuid);
+    p->bounding |= (1 << cpuid);
+}
 #endif
