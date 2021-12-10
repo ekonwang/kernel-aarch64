@@ -62,4 +62,4 @@ void sleep(void *chan, SpinLock *lock);
 void wakeup(void *chan);
 void add_loop_test(int times);
 void add_sd_test(); /* lab7: sd driver */
-void add_sd_loop(); /* lab7: sd driver */
+void sd_init_idle(); /* lab7: sd driver */

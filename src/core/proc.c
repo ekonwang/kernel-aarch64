@@ -219,7 +219,7 @@ void add_sd_test() {
 }
 
 /* Initialize new user program to test SD driver */
-void add_sd_loop() {
+void sd_init_idle() {
     struct proc *p;
     extern char sdloop_start[], sdloop_end[];
     u64 cpsize = (u64)(sdloop_end - sdloop_start), tmpsize;
@@ -245,7 +245,7 @@ void add_sd_loop() {
     p -> sz = PAGE_SIZE;
     p -> context -> r30 = (u64)to_forkret;
 
-    bound_processor_pid(1, 0);
+    bound_processor_pid(p->pid, 0);
 
     release_spinlock(&p->lock);
 }
