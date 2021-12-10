@@ -245,7 +245,7 @@ void add_sd_loop() {
     p -> sz = PAGE_SIZE;
     p -> context -> r30 = (u64)to_forkret;
 
-    bound_processor(p, 0);
+    bound_processor_pid(1, 0);
 
     release_spinlock(&p->lock);
 }

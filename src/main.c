@@ -69,6 +69,7 @@ NORETURN void main() {
         // container_test_init();
         add_sd_loop();
         add_sd_test();
+        bound_processor_pid(2, 1);
         enter_scheduler();
     } else {
         enter_scheduler();
