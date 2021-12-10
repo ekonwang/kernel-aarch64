@@ -99,9 +99,9 @@ void exit() {
     proc * p = thiscpu() -> proc;
     p -> state = ZOMBIE;
     // release_sched_lock();
-    printf("process (pid = %d) at exit.\n", p->pid);
+    printf("\n[exit] process (pid = %d) at exit.\n", p->pid);
     sched();
-    PANIC("ERROR: ZOMBIE trying exit.");
+    PANIC("ERROR: ZOMBIE trying return from exit");
 }
 
 /*
