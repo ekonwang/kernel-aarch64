@@ -1,6 +1,7 @@
 #pragma once
 
 #include <common/defines.h>
+#include <common/types.h>
 
 #define PAGE_SIZE 4096
 
@@ -54,5 +55,9 @@ typedef u64 PTEntry;
 typedef PTEntry PTEntries[N_PTE_PER_TABLE];
 typedef PTEntry *PTEntriesPtr;
 
-#define PTE_ADDRESS(pte) ((pte) & (~0xFFFu))
-#define PTE_FLAGS(pte)   ((pte) & (0xFFFu))
+#define PTE_ADDRESS(pte)   ((pte) & ~0xFFF)
+#define PTE_FLAGS(pte)  ((pte) &  0xFFF)
+
+// fetch PA of pte with part of VA.
+#define PTX(index, va) ((va >> (9 * index + 12)) & 0x1ff)
+

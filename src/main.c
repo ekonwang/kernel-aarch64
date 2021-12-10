@@ -10,6 +10,7 @@
 #include <core/virtual_memory.h>
 #include <driver/clock.h>
 #include <driver/interrupt.h>
+#include <driver/sd.h>
 
 struct cpu cpus[NCPU];
 
@@ -31,9 +32,10 @@ void init_system_once() {
     init_memory_manager();
     init_virtual_memory();
 
-    vm_test();
+    // vm_test();
     arena_test();
     init_container();
+    sd_init();
 
     release_spinlock(&init_lock);
 }
@@ -49,22 +51,24 @@ void init_system_per_cpu() {
     set_clock_handler(hello);
     init_trap();
 
-    /* TODO: Lab3 uncomment to test interrupt */
+    /* : Lab3 uncomment to test interrupt */
     // test_kernel_interrupt();
     init_cpu(&root_container->scheduler);
 }
 
 NORETURN void main() {
-    /* TODO: Lab1 print */
-
+	/* : Lab1 print */
     init_system_once();
     wait_spinlock(&init_lock);
 
     init_system_per_cpu();
 
     if (cpuid() == 0) {
-        spawn_init_process();
-        container_test_init();
+        // spawn_init_process();
+        // add_loop_test(1);
+        // container_test_init();
+        add_sd_loop();
+        add_sd_test();
         enter_scheduler();
     } else {
         enter_scheduler();
@@ -72,3 +76,8 @@ NORETURN void main() {
 
     no_return();
 }
+
+
+/* cmake .. -DCMAKE_BUILD_TYPE=Debug
+ * make qemu
+ */

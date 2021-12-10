@@ -14,13 +14,11 @@ typedef struct {
     // lock protects:
     // 1. metadata of inode
     // 2. file content managed by this inode
-    SpinLock lock;
-
-    RefCount rc;
     ListNode node;
     usize inode_no;
-
-    bool valid;        // is `entry` loaded?
+    RefCount rc;
+    SpinLock lock;
+    bool valid;        // is `entry` loaded? if `valid` is false, meaning content of this inode is not loaded.
     InodeEntry entry;  // real inode data on the disk.
 } Inode;
 

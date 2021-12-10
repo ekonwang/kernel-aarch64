@@ -16,6 +16,9 @@ typedef struct {
 
 struct Arena;
 
+/* what does this mean?
+ * ArenaPage, what does this do?
+ */
 typedef struct {
     struct Arena *arena;
     ListNode list;

@@ -93,7 +93,6 @@ void test_touch() {
         mock.end_op(ctx);
         assert_eq(mock.count_inodes(), i);
     }
-
     usize n = mock.num_inodes - 1;
     for (usize i = 2; i < mock.num_inodes; i += 2, n--) {
         mock.begin_op(ctx);
@@ -101,7 +100,6 @@ void test_touch() {
         assert_ne(inodes.lookup(p, std::to_string(i).data(), &index), 0);
         assert_ne(index, 10086);
         inodes.remove(ctx, p, index);
-
         auto *q = inodes.get(i);
         inodes.lock(q);
         q->entry.num_links = 0;

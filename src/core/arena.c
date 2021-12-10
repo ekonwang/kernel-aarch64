@@ -17,6 +17,7 @@ void init_arena(Arena *arena, usize object_size, ArenaPageAllocator allocator) {
     arena->num_pages = 0;
 }
 
+
 void clear_arena(Arena *arena) {
     acquire_spinlock(&arena->lock);
 

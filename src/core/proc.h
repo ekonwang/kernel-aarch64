@@ -17,7 +17,23 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
  */
 /* Stack must always be 16 bytes aligned. */
 struct context {
-    /* TODO: Lab3 Process */
+    /* : Lab3 Process */
+    u64 r15;  // r15 is added into context as an auxiliary register in swtch.
+	u64 r16;
+	u64 r17;
+	u64 r18;
+	u64 r19;
+	u64 r20;
+	u64 r21;
+	u64 r22;
+	u64 r23;
+	u64 r24;
+	u64 r25;
+	u64 r26;
+	u64 r27;
+	u64 r28;
+	u64 r29;
+	u64 r30;
 };
 
 struct proc {
@@ -34,7 +50,7 @@ struct proc {
     char name[16];           /* Process name (debugging)                */
     void *cont;
     bool is_scheduler;
-	
+	SpinLock lock;
 };
 typedef struct proc proc;
 void init_proc();
@@ -43,3 +59,6 @@ void yield();
 NO_RETURN void exit();
 void sleep(void *chan, SpinLock *lock);
 void wakeup(void *chan);
+void add_loop_test(int times);
+void add_sd_test(); /* lab7: sd driver */
+void add_sd_loop(); /* lab7: sd driver */
