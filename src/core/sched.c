@@ -52,10 +52,10 @@ void yield_scheduler(struct scheduler *this) {
 
 NO_RETURN void scheduler_simple(struct scheduler *this) {
     int has_run;
+    struct cpu *c = thiscpu();
     while(1){
         for (u64 i = 0; i < NPROC; i++) {
             has_run = 0;
-            struct cpu *c = thiscpu();
             proc *p = &this->ptable.proc[i];
             if (try_acquire_spinlock(&(p->lock))) {
                 if (p->bounding && !(p->bounding & (1 << cpuid()))) {
@@ -70,17 +70,15 @@ NO_RETURN void scheduler_simple(struct scheduler *this) {
                         p->state = RUNNING;
                     }
                     c->proc = p;
-                    uvm_switch(p->pgdir);
 
                     if (p->is_scheduler) 
                     {
                         c->scheduler = &((container *)p->cont)->scheduler;
                         // printf("\n  ≤≤≤ cpu %d: scheduler CHANGE to : %p\n", cpuid(), c->scheduler);
                         swtch(&this->context[cpuid()], ((container *)p->cont)->scheduler.context[cpuid()]);
-                    }
-                    else 
-                    {
+                    } else {
                         // printf("  ≤≤≤ cpu %d: will jump to %p [context : %p]\n", cpuid(), p->context->r30, p->context);
+                        uvm_switch(p->pgdir);
                         swtch(&this->context[cpuid()], p->context);
                     }
                 }
