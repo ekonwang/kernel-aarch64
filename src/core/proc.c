@@ -167,10 +167,12 @@ void add_loop_test(int times) {
         p = alloc_proc();
 
         acquire_spinlock(&p->lock);
+
         if (p == NULL) 
             PANIC("Could not allocate init process");
         if ((p->pgdir = pgdir_init()) == NULL)
             PANIC("Could not initialize root pagetable");
+            
         for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
             PagePtr = kalloc();
             if (PagePtr == NULL) 
@@ -197,11 +199,13 @@ void add_sd_test() {
     p = alloc_proc();
     
     acquire_spinlock(&p->lock);
+
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
     printf("\n[add_sd_test] (pid = %d)\n", p->pid);
+
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
         PagePtr = kalloc();
         if (PagePtr == NULL) 
@@ -227,24 +231,27 @@ void sd_init_idle() {
     p = alloc_proc();
     
     acquire_spinlock(&p->lock);
+
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
     printf("\n[add_sd_loop] (pid = %d)\n", p->pid);
+
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
+
         PagePtr = kalloc();
         if (PagePtr == NULL) 
             PANIC("kalloc failed");
         tmpsize = (cpsize-vplace > PAGE_SIZE)? PAGE_SIZE : (cpsize-vplace);
         uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
         memcpy(PagePtr, sdloop_start + vplace, tmpsize);
+
     }
     
     p -> state = RUNNABLE;
     p -> sz = PAGE_SIZE;
     p -> context -> r30 = (u64)to_forkret;
-
     bound_processor_pid(p->pid, 0);
 
     release_spinlock(&p->lock);
