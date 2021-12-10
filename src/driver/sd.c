@@ -500,6 +500,9 @@ static int sdBaseClock;
 struct buf sdque;
 struct SpinLock sdlock;
 
+static void sd_waitdone(buf *b);
+static void sd_doit(buf *b);
+
 void sd_init() {
     /*
      * Initialize the lock and request queue if any.
@@ -517,6 +520,19 @@ void sd_init() {
      * Hint: Maybe need to use sd_start for reading, and
      * sdWaitForInterrupt for clearing certain interrupt.
      */
+    buf mbr;
+    mbr.flags = (int)0;
+    mbr.blockno = (u32)0;
+    sd_start(&mbr, true);
+    sd_waitdone(&mbr);
+    printf("\n \
+==> SD initialization \
+\n \
+[LBA of first absolute sector in the partition] : 0x%x\
+\n \
+[Number of sectors in partition] : %d \
+\n\n"\
+    , *(u32*)((u8*)&mbr.data + 0x1ce + 0x8), *(u32*)((u8*)&mbr.data + 0x1ce + 0xc));
 }
 
 static void sd_delayus(u32 c) {
@@ -683,20 +699,6 @@ void sdrw(struct buf *b) {
 
 /* SD card test and benchmark. */
 void sd_test() {
-    buf mbr;
-    mbr.flags = (int)0;
-    mbr.blockno = (u32)0;
-    sdrw(&mbr);
-    printf("\n \
-==> SD initialization \
-\n \
-[LBA of first absolute sector in the partition] : %d\
-\n \
-[Number of sectors in partition] : %d\n\n"\
-, (int)(&mbr.data + 0x1ce + 0x8), (int)(&mbr.data + 0x1ce + 0xc));
-
-
-    sd_init();
     static struct buf b[1 << 11];
     int n = sizeof(b) / sizeof(b[0]);
     int mb = (n * BSIZE) >> 20;
