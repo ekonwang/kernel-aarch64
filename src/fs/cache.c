@@ -11,7 +11,7 @@ static const BlockDevice *device;
 
 static SpinLock lock;     // protects block cache.
 static Arena arena;       // memory pool for `Block` struct.
-static ListNode head;     // the list of all allocated in-memory block.
+static ListNode *head;     // the list of all allocated in-memory block.
 static LogHeader header;  // in-memory copy of log header block.
 
 // hint: you may need some other variables. Just add them here.
@@ -41,7 +41,9 @@ void init_bcache(const SuperBlock *_sblock, const BlockDevice *_device) {
     sblock = _sblock;
     device = _device;
 
-    // TODO
+    ArenaPageAllocator allocator = {.allocate = kalloc, .free = kfree};
+    init_arena(&arena, sizeof(Block), allocator);
+    
 }
 
 // initialize a block struct.
