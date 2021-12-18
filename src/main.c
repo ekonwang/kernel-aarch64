@@ -35,9 +35,9 @@ void init_system_once() {
     // vm_test();
     arena_test();
     init_container();
-    sd_init();
+    // sd_init();
 
-    release_spinlock(&init_lock);
+    // release_spinlock(&init_lock);
 }
 
 void hello() {
@@ -64,12 +64,13 @@ NORETURN void main() {
     init_system_per_cpu();
 
     if (cpuid() == 0) {
-        // spawn_init_process();
+        spawn_init_process();
         // add_loop_test(1);
         // container_test_init();
         sd_init_idle();
-        add_sd_test();
-        bound_processor_pid(2, 1);
+        // add_sd_test();
+        bound_processor_pid(1, 0);
+        bound_processor_pid(2, 0);
         enter_scheduler();
     } else {
         enter_scheduler();
