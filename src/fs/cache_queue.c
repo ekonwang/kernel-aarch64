@@ -2,11 +2,9 @@
 #include <core/arena.h>
 #include <core/physical_memory.h>
 #include <common/spinlock.h>
+#include <common/list.h>
 
-extern bool cache_debug;
-
-static ListNode *head;     // the list of all allocated in-memory block.
-static Arena arena;       // memory pool for `Block` struct.
+static ListNode *head = NULL;     // the list of all allocated in-memory block.
 static SpinLock lock;
 /*
  * Here we got 3 functions operating on cache list:
@@ -17,56 +15,66 @@ static SpinLock lock;
  * 
  * insert into cache queue. 
  */
-void 
-insert_cache() {
-
+static void 
+insert_cache(Block *blk) {
+    acquire_spinlock(&lock);
+    ListNode *node = &blk->node;
+    merge_list(head->prev, node);
+    head = node;
+    release_spinlock(&lock);
 }
 
 /* 
  * remove from cache queue. 
  */
-void 
+static void 
 remove_cache(Block *blk) {
-
+    acquire_spinlock(&lock);
+    ListNode *node = &blk->node;
+    if (head == node) {
+        if (head->next == head) 
+            head = NULL;
+        else
+            head = head->next;
+    }
+    detach_from_list(node);
+    release_spinlock(&lock);    
 }
 
 /*
  * try getting from cache queue.  
  */
-Block 
-*get_cache(usize block_no) {
+Block *
+get_cache(usize block_no) {
+    acquire_spinlock(&lock);
+    Block *blk = NULL;
+    Block *res = NULL;
+    ListNode *node = head;
+    
+    if (head != NULL) {
+        blk = (Block *)node2blk(head);
+        if (blk->block_no == block_no) {
+            res = blk;
+        }
+        node = head->next;
+        while(node != head && res == NULL) {
+            blk = node2blk(node);
+            if (blk->block_no == block_no) {
+                res = blk;
+            }
+            node = node->next;
+        }
+    }
 
+    release_spinlock(&lock);
+    return res;
 }
 
 /*
- * clear unused cached blocks.
- */
-void static 
-scavenger() {
-    usize cached_blocks_num;
-    usize freed_slots_num;
-
-    if (cache_debug) {
-        printf("\n\
-        [block scavenger] in cache block : %d(%x)\
-        \n"
-        , get_num_cached_blocks());
-    }
-
-    if (cache_debug) {
-        printf("\n\
-        [block scavenger] cleared : %d(%x)\
-        \n"
-        , get_num_cached_blocks());
-    }
-}
-
-/*
- * init cache list 
+ * init cache queue's lock and head pointer. 
  */
 void 
 init_cache_list() {
-    ArenaPageAllocator allocator = {.allocate = kalloc, .free = kfree};
-    init_arena(&arena, sizeof(Block), allocator);
-    init_spinlock(&lock, "cache_lock");
+    init_spinlock(&lock, __FILE__);
+    head = NULL;
 }

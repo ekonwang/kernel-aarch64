@@ -14,6 +14,7 @@ bool cache_debug = true; // output info in debug mode.
 
 static SpinLock lock;     // protects block cache.
 static LogHeader header;  // in-memory copy of log header block.
+static Arena arena;       // memory pool for `Block` struct.
 
 // hint: you may need some other variables. Just add them here.
 
@@ -37,13 +38,45 @@ static INLINE void write_header() {
     device->write(sblock->log_start, (u8 *)&header);
 }
 
+/*
+ * init cache list 
+ */
+void 
+init_cache_list() {
+    ArenaPageAllocator allocator = {.allocate = kalloc, .free = kfree};
+    init_arena(&arena, sizeof(Block), allocator);
+    init_spinlock(&lock, "cache_lock");
+}
+
 // initialize block cache.
 void init_bcache(const SuperBlock *_sblock, const BlockDevice *_device) {
     sblock = _sblock;
     device = _device;
 
     
-    
+}
+
+/*
+ * clear unused cached blocks.
+ */
+void static 
+scavenger() {
+    usize cached_blocks_num;
+    usize freed_slots_num;
+
+    if (cache_debug) {
+        printf("\n\
+        [block scavenger] in cache block : %d(%x)\
+        \n"
+        , get_num_cached_blocks());
+    }
+
+    if (cache_debug) {
+        printf("\n\
+        [block scavenger] cleared : %d(%x)\
+        \n"
+        , get_num_cached_blocks());
+    }
 }
 
 // initialize a block struct.
