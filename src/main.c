@@ -70,7 +70,6 @@ NORETURN void main() {
         sd_init_idle();
         // add_sd_test();
         bound_processor_pid(1, 0);
-        bound_processor_pid(2, 0);
         enter_scheduler();
     } else {
         enter_scheduler();
