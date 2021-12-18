@@ -9,6 +9,8 @@
 static const SuperBlock *sblock;
 static const BlockDevice *device;
 
+static bool debug = true; // output info in debug mode.
+
 static SpinLock lock;     // protects block cache.
 static Arena arena;       // memory pool for `Block` struct.
 static ListNode *head;     // the list of all allocated in-memory block.
@@ -34,6 +36,59 @@ static INLINE void read_header() {
 // write log header back to disk.
 static INLINE void write_header() {
     device->write(sblock->log_start, (u8 *)&header);
+}
+
+/*
+ * Here we got 3 functions operating on cache list:
+ * 1) `insert_cache`
+ * 2) `remove_cache`
+ * 3) `get_cache`
+ * 4) `scavenger`
+ * 
+ * insert into cache queue. 
+ */
+void static 
+insert_cache() {
+
+}
+
+/* 
+ * remove from cache queue. 
+ */
+void static 
+remove_cache(Block *blk) {
+
+}
+
+/*
+ * try getting from cache queue.  
+ */
+static Block 
+*get_cache(usize block_no) {
+
+}
+
+/*
+ * clear unused cached blocks.
+ */
+void static 
+scavenger() {
+    usize cached_blocks_num;
+    usize freed_slots_num;
+
+    if (debug) {
+        printf("\n\
+        [block scavenger] in cache block : %d(%x)\
+        \n"
+        , get_num_cached_blocks());
+    }
+
+    if (debug) {
+        printf("\n\
+        [block scavenger] cleared : %d(%x)\
+        \n"
+        , get_num_cached_blocks());
+    }
 }
 
 // initialize block cache.
