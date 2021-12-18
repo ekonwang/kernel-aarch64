@@ -9,7 +9,7 @@
 #include <core/container.h>
 
 extern void to_forkret();
-extern void to_sdtest();
+extern void to_initret();
 extern void trap_return();
 /*
  * Look through the process table for an UNUSED proc.
@@ -76,7 +76,7 @@ void spawn_init_process() {
     
     p -> state = RUNNABLE;
     p -> sz = PAGE_SIZE;
-    p -> context -> r30 = (u64)to_forkret;
+    p -> context -> r30 = (u64)to_initret;
 
     release_spinlock(&p->lock);
 }
@@ -86,6 +86,11 @@ void spawn_init_process() {
  */
 void forkret() {
 	/* : Lab3 Process */
+}
+
+void initret() {
+    /* init process entry (pid = 1) */
+    sd_init();
 }
 
 /*
@@ -217,7 +222,7 @@ void add_sd_test() {
     
     p -> state = RUNNABLE;
     p -> sz = PAGE_SIZE;
-    p -> context -> r30 = (u64)to_sdtest;
+    p -> context -> r30 = (u64)to_initret;
 
     release_spinlock(&p->lock);
 }

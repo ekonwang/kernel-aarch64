@@ -37,7 +37,7 @@ void init_system_once() {
     init_container();
     // sd_init();
 
-    // release_spinlock(&init_lock);
+    release_spinlock(&init_lock);
 }
 
 void hello() {

@@ -4,9 +4,9 @@ to_forkret:
      bl forkret
      b trap_return
 
-.global to_sdtest
-to_sdtest:
-     bl sd_test
+.global to_initret
+to_initret:
+     bl initret
      b trap_return
 
 .global trap_entry
