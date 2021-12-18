@@ -22,7 +22,7 @@ BlockDevice block_device;
 
 void init_block_device() {
     sd_init();
-    sd_read(1, sblock_data);
+    sd_read(0x20800, sblock_data);
 
     block_device.read = sd_read;
     block_device.write = sd_write;
