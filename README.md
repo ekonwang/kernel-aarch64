@@ -1,7 +1,7 @@
 # 项目介绍
 ![](https://img.shields.io/badge/release-v1.0-orange) ![](https://img.shields.io/badge/xv6-armv8-red)
-一个基于 ARM 架构的简易教学操作系统。
-One simplified version of ARM based operating system.
+##### 一个基于 ARM 架构的简易教学操作系统。
+##### One simplified version of ARM based operating system.
 
 实验内容将包括：
 
