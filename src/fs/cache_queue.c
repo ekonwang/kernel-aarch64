@@ -6,8 +6,9 @@
 
 static ListNode head;     // the list of all allocated in-memory block.
 static SpinLock lock;
+
 /*
- * Here we got 3 functions operating on cache list:
+ * 3 functions operating on cache list:
  * 1) `insert_cache`
  * 2) `remove_cache`
  * 3) `get_cache`
