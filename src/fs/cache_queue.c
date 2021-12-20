@@ -71,7 +71,7 @@ init_cache_list() {
  * clear unused cached blocks.
  * caller must hold the cache lock in cache.c
  */
-void static 
+void 
 scavenger() {
     usize cached_blocks_num = get_num_cached_blocks();
 
