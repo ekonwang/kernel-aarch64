@@ -10,7 +10,7 @@
 static const SuperBlock *sblock;
 static const BlockDevice *device;
 
-bool cache_debug = true; // output info in debug mode.
+bool static _cache_debug = true; // output info in debug mode.
 
 static SpinLock lock;     // protects block cache.
 static LogHeader header;  // in-memory copy of log header block.
@@ -38,14 +38,8 @@ static INLINE void write_header() {
     device->write(sblock->log_start, (u8 *)&header);
 }
 
-/*
- * init cache list 
- */
-void 
-init_cache_list() {
-    ArenaPageAllocator allocator = {.allocate = kalloc, .free = kfree};
-    init_arena(&arena, sizeof(Block), allocator);
-    init_spinlock(&lock, "cache_lock");
+const bool cache_debug() {
+    return _cache_debug;
 }
 
 // initialize block cache.
@@ -53,31 +47,18 @@ void init_bcache(const SuperBlock *_sblock, const BlockDevice *_device) {
     sblock = _sblock;
     device = _device;
 
-    
+    ArenaPageAllocator allocator = {.allocate = kalloc, .free = kfree};
+    init_arena(&arena, sizeof(Block), allocator);
+    init_cache_list();
+    init_spinlock(&lock, __FILE__);
+    _cache_debug = true;
 }
 
-/*
- * clear unused cached blocks.
- */
-void static 
-scavenger() {
-    usize cached_blocks_num;
-    usize freed_slots_num;
-
-    if (cache_debug) {
-        printf("\n\
-        [block scavenger] in cache block : %d(%x)\
-        \n"
-        , get_num_cached_blocks());
-    }
-
-    if (cache_debug) {
-        printf("\n\
-        [block scavenger] cleared : %d(%x)\
-        \n"
-        , get_num_cached_blocks());
-    }
+// exile cached block from arena.
+void exile_cache(Block *blk) {
+    free_object(blk);
 }
+
 
 // initialize a block struct.
 static void init_block(Block *block) {

@@ -4,7 +4,7 @@
 #include <common/spinlock.h>
 #include <common/list.h>
 
-static ListNode *head = NULL;     // the list of all allocated in-memory block.
+static ListNode head;     // the list of all allocated in-memory block.
 static SpinLock lock;
 /*
  * Here we got 3 functions operating on cache list:
@@ -15,30 +15,24 @@ static SpinLock lock;
  * 
  * insert into cache queue. 
  */
-static void 
+void 
 insert_cache(Block *blk) {
     acquire_spinlock(&lock);
     ListNode *node = &blk->node;
-    merge_list(head->prev, node);
-    head = node;
+    merge_list(&head.prev, node);
     release_spinlock(&lock);
 }
 
 /* 
  * remove from cache queue. 
+ * caller hold the cache queue lock.
  */
 static void 
 remove_cache(Block *blk) {
-    acquire_spinlock(&lock);
+    // acquire_spinlock(&lock);
     ListNode *node = &blk->node;
-    if (head == node) {
-        if (head->next == head) 
-            head = NULL;
-        else
-            head = head->next;
-    }
     detach_from_list(node);
-    release_spinlock(&lock);    
+    // release_spinlock(&lock);    
 }
 
 /*
@@ -49,23 +43,16 @@ get_cache(usize block_no) {
     acquire_spinlock(&lock);
     Block *blk = NULL;
     Block *res = NULL;
-    ListNode *node = head;
+    ListNode *node = head.next;
     
-    if (head != NULL) {
-        blk = (Block *)node2blk(head);
+    while(node != &head && res == NULL) {
+        blk = node2blk(node);
         if (blk->block_no == block_no) {
             res = blk;
         }
-        node = head->next;
-        while(node != head && res == NULL) {
-            blk = node2blk(node);
-            if (blk->block_no == block_no) {
-                res = blk;
-            }
-            node = node->next;
-        }
+        node = node->next;
     }
-
+    
     release_spinlock(&lock);
     return res;
 }
@@ -76,5 +63,44 @@ get_cache(usize block_no) {
 void 
 init_cache_list() {
     init_spinlock(&lock, __FILE__);
-    head = NULL;
+    init_list_node(&head);
+}
+
+
+/*
+ * clear unused cached blocks.
+ * caller must hold the cache lock in cache.c
+ */
+void static 
+scavenger() {
+    usize cached_blocks_num = get_num_cached_blocks();
+
+    if (cache_debug()) {
+        printf("\n\
+=> [block scavenger] in cache block : %d blocks\
+        \n"
+        , cached_blocks_num);
+    }
+
+    acquire_spinlock(&lock);
+    ListNode *node = head.next;
+    while(node != &head) {
+        Block *blk = (Block *)node2blk(node);
+        if (blk->acquired) {
+            remove_cache(blk);
+            exile_cache(blk);
+        }
+    }
+    release_spinlock(&lock);
+
+    usize new_cached_blocks_num = get_num_cached_blocks();
+    usize freed_slots_num = cached_blocks_num - new_cached_blocks_num;
+
+    if (cache_debug()) {
+        printf("\n\
+                      after clearing : %d blocks\n\
+                      clear %d cached blocks \n\
+        \n"
+        , new_cached_blocks_num, freed_slots_num);
+    }
 }

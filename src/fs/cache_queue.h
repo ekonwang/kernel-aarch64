@@ -1,3 +1,5 @@
+#pragma once
+
 #include <fs/cache.h>
 #include <fs/defines.h>
 
