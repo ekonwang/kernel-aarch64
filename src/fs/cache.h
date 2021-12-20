@@ -33,7 +33,7 @@ typedef struct {
 // see `begin_op` and `end_op`.
 typedef struct {
     usize ts;  // the timestamp/identifier allocated by `begin_op`.
-
+    usize ops_cnt;
     // hint: you may want to add something else here.
 } OpContext;
 

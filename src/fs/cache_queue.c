@@ -87,7 +87,7 @@ scavenger() {
     ListNode *node = head.next;
     while(node != &head) {
         Block *blk = (Block *)node2blk(node);
-        if (blk->acquired) {
+        if (blk->lock.locked == false && blk->pinned == false) {
             remove_cache(blk);
             exile_cache(blk);
         }
