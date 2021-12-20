@@ -56,6 +56,9 @@ void init_bcache(const SuperBlock *_sblock, const BlockDevice *_device) {
     init_cache_list();
     init_spinlock(&lock, __FILE__);
     _cache_debug = true;
+
+    // if neccessary, recover from crash.
+    crash_recover();
 }
 
 // exile cached block from arena.
@@ -166,6 +169,8 @@ static void commit() {
     for (i = 0; i < header.num_blocks; i++) {
         from = get_cache(header.block_no[i]);
         device->write(start + 1 + i, &(from->data)); 
+        // unpin the block cache.
+        from -> pinned = false;
     }
 
     crash_recover();
