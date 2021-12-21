@@ -83,7 +83,7 @@ static void init_block(Block *block) {
 
 
 // see `cache.h`.
-static usize get_num_cached_blocks() {
+usize get_num_cached_blocks() {
     return arena.num_objects;
 }
 

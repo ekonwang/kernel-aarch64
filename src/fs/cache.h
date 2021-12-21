@@ -103,6 +103,8 @@ typedef struct BlockCache {
 
 extern BlockCache bcache;
 
+
 void init_bcache(const SuperBlock *sblock, const BlockDevice *device);
 void exile_cache(Block *blk);
 const bool cache_debug();
+usize get_num_cached_blocks();
