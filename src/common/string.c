@@ -7,7 +7,7 @@ void *memset(void *s, int c, usize n) {
     return s;
 }
 
-void *memcpy(void *restrict dest, const void *restrict src, usize n) {
+void *memcpy(void * dest, const void * src, usize n) {
     for (usize i = 0; i < n; i++)
         ((u8 *)dest)[i] = ((u8 *)src)[i];
 
@@ -45,7 +45,7 @@ void *memmove(void *dest, const void *src, usize n) {
     return dest;
 }
 
-char *strncpy(char *restrict dest, const char *restrict src, usize n) {
+char *strncpy(char * dest, const char * src, usize n) {
     usize i = 0;
     for (; i < n && src[i] != '\0'; i++)
         dest[i] = src[i];
@@ -55,7 +55,7 @@ char *strncpy(char *restrict dest, const char *restrict src, usize n) {
     return dest;
 }
 
-char *strncpy_fast(char *restrict dest, const char *restrict src, usize n) {
+char *strncpy_fast(char * dest, const char * src, usize n) {
     usize i = 0;
     for (; i < n && src[i] != '\0'; i++)
         dest[i] = src[i];
