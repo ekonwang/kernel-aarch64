@@ -35,7 +35,7 @@ void init_system_once() {
     // vm_test();
     arena_test();
     init_container();
-    // sd_init();
+    sd_init();
 
     release_spinlock(&init_lock);
 }

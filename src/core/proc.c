@@ -111,6 +111,8 @@ void initret() {
     s->log_start,
     s->inode_start,
     s->bitmap_start);
+
+    sd_test();
 }
 
 /*
