@@ -90,27 +90,6 @@ void forkret() {
 }
 
 void initret() {
-    /* init process entry (pid = 1) */
-    init_block_device();
-    SuperBlock *s = get_super_block();
-    printf("\n\
-[SUPER BLOCK]\n\
-    num_blocks: %d\n\
-    num_data_blocks: %d\n\
-    num_inodes: %d\n\
-    num_log_blocks: %d\n\
-    log_start: %d\n\
-    inode_start: %d\n\
-    bitmap_start: %d\n\
-[SUPER SHOW END]\n\n",
-
-    s->num_blocks,
-    s->num_data_blocks,
-    s->num_inodes,
-    s->num_log_blocks,
-    s->log_start,
-    s->inode_start,
-    s->bitmap_start);
 
     sd_test();
 }
