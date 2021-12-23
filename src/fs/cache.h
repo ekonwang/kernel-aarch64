@@ -4,6 +4,7 @@
 #include <core/sleeplock.h>
 #include <fs/block_device.h>
 #include <fs/defines.h>
+#include <driver/sd.h>
 
 // maximum number of distinct blocks that one atomic operation can hold.
 #define OP_MAX_NUM_BLOCKS 10

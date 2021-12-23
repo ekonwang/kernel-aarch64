@@ -5,7 +5,7 @@
 #include <common/list.h>
 
 static ListNode head;     // the list of all allocated in-memory block.
-static SpinLock lock;
+static SpinLock qlock;
 
 /*
  * 3 functions operating on cache list:
@@ -18,22 +18,22 @@ static SpinLock lock;
  */
 void 
 insert_cache(Block *blk) {
-    acquire_spinlock(&lock);
+    acquire_spinlock(&qlock);
     ListNode *node = &blk->node;
     merge_list(&head.prev, node);
-    release_spinlock(&lock);
+    release_spinlock(&qlock);
 }
 
 /* 
  * remove from cache queue. 
- * caller hold the cache queue lock.
+ * caller hold the cache queue qlock.
  */
 static void 
 remove_cache(Block *blk) {
-    // acquire_spinlock(&lock);
+    // acquire_spinlock(&qlock);
     ListNode *node = &blk->node;
     detach_from_list(node);
-    // release_spinlock(&lock);    
+    // release_spinlock(&qlock);    
 }
 
 /*
@@ -41,7 +41,7 @@ remove_cache(Block *blk) {
  */
 Block *
 get_cache(usize block_no) {
-    acquire_spinlock(&lock);
+    acquire_spinlock(&qlock);
     Block *blk = NULL;
     Block *res = NULL;
     ListNode *node = head.next;
@@ -54,23 +54,23 @@ get_cache(usize block_no) {
         node = node->next;
     }
     
-    release_spinlock(&lock);
+    release_spinlock(&qlock);
     return res;
 }
 
 /*
- * init cache queue's lock and head pointer. 
+ * init cache queue's qlock and head pointer. 
  */
 void 
 init_cache_list() {
-    init_spinlock(&lock, __FILE__);
+    init_spinlock(&qlock, __FILE__);
     init_list_node(&head);
 }
 
 
 /*
  * clear unused cached blocks.
- * caller must hold the cache lock in cache.c
+ * caller must hold the cache qlock in cache.c
  */
 void 
 scavenger() {
@@ -78,21 +78,22 @@ scavenger() {
 
     if (cache_debug()) {
         printf("\n\
-=> [block scavenger] in cache block : %d blocks\
+=> \033[42;37;5m[block scavenger]\033[0m: in cache block : %d blocks\
         \n"
         , cached_blocks_num);
     }
 
-    acquire_spinlock(&lock);
+    acquire_spinlock(&qlock);
     ListNode *node = head.next;
-    while(node != &head) {
+    while(node != &head && get_num_cached_blocks() > EVICTION_THRESHOLD) {
         Block *blk = (Block *)node2blk(node);
-        if (blk->lock.locked == false && blk->pinned == false) {
+        node = node->next;
+        if (blk->acquired == false && blk->pinned == false) {
             remove_cache(blk);
             exile_cache(blk);
         }
     }
-    release_spinlock(&lock);
+    release_spinlock(&qlock);
 
     usize new_cached_blocks_num = get_num_cached_blocks();
     usize freed_slots_num = cached_blocks_num - new_cached_blocks_num;
