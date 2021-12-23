@@ -520,7 +520,6 @@ void sd_init() {
      * Hint: Maybe need to use sd_start for reading, and
      * sdWaitForInterrupt for clearing certain interrupt.
      */
-<<<<<<< HEAD
     buf mbr;
     mbr.flags = (int)0;
     mbr.blockno = (u32)0;
@@ -534,11 +533,9 @@ void sd_init() {
 [Number of sectors in partition] : %d \
 \n\n"\
     , *(u32*)((u8*)&mbr.data + 0x1ce + 0x8), *(u32*)((u8*)&mbr.data + 0x1ce + 0xc));
-=======
 
-    /* TODO: Lab7 driver. */
+    /* Lab7 driver. */
 
->>>>>>> 627126685a581327674ef2c74dfc9e804a2974bf
 }
 
 static void sd_delayus(u32 c) {
