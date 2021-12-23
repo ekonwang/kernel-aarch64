@@ -7,10 +7,9 @@
 #include <core/sched.h>
 #include <core/virtual_memory.h>
 #include <core/container.h>
-#include <fs/fs.h>
 
 extern void to_forkret();
-extern void to_initret();
+extern void to_sdtest();
 extern void trap_return();
 /*
  * Look through the process table for an UNUSED proc.
@@ -65,7 +64,7 @@ void spawn_init_process() {
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
-    printf("[spawn_init_process] (pid = %d)\n", p->pid);
+    printf("[spawn_init_process] Root page table of process p : %p\n", p->pgdir);
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
         PagePtr = kalloc();
         if (PagePtr == NULL) 
@@ -77,7 +76,7 @@ void spawn_init_process() {
     
     p -> state = RUNNABLE;
     p -> sz = PAGE_SIZE;
-    p -> context -> r30 = (u64)to_initret;
+    p -> context -> r30 = (u64)to_forkret;
 
     release_spinlock(&p->lock);
 }
@@ -87,32 +86,6 @@ void spawn_init_process() {
  */
 void forkret() {
 	/* : Lab3 Process */
-}
-
-void initret() {
-    /* init process entry (pid = 1) */
-    init_block_device();
-    SuperBlock *s = get_super_block();
-    printf("\n\
-[SUPER BLOCK]\n\
-    num_blocks: %d\n\
-    num_data_blocks: %d\n\
-    num_inodes: %d\n\
-    num_log_blocks: %d\n\
-    log_start: %d\n\
-    inode_start: %d\n\
-    bitmap_start: %d\n\
-[SUPER SHOW END]\n\n",
-
-    s->num_blocks,
-    s->num_data_blocks,
-    s->num_inodes,
-    s->num_log_blocks,
-    s->log_start,
-    s->inode_start,
-    s->bitmap_start);
-
-    sd_test();
 }
 
 /*
@@ -126,9 +99,9 @@ void exit() {
     proc * p = thiscpu() -> proc;
     p -> state = ZOMBIE;
     // release_sched_lock();
-    printf("\n[exit] process (pid = %d) at exit.\n", p->pid);
+    printf("process (pid = %d) at exit.\n", p->pid);
     sched();
-    PANIC("ERROR: ZOMBIE trying return from exit");
+    PANIC("ERROR: ZOMBIE trying exit.");
 }
 
 /*
@@ -181,7 +154,7 @@ void wakeup(void *chan) {
     rec_wakeup(chan, &root_container->scheduler);
 }
 
-/*
+/* 
  * Add process at thiscpu()->container,
  * execute code in src/user/loop.S
  */
@@ -194,12 +167,10 @@ void add_loop_test(int times) {
         p = alloc_proc();
 
         acquire_spinlock(&p->lock);
-
         if (p == NULL) 
             PANIC("Could not allocate init process");
         if ((p->pgdir = pgdir_init()) == NULL)
             PANIC("Could not initialize root pagetable");
-            
         for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
             PagePtr = kalloc();
             if (PagePtr == NULL) 
@@ -226,13 +197,11 @@ void add_sd_test() {
     p = alloc_proc();
     
     acquire_spinlock(&p->lock);
-
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
-    printf("\n[add_sd_test] (pid = %d)\n", p->pid);
-
+    printf("\n[add_sd_test] p : %p\n", p);
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
         PagePtr = kalloc();
         if (PagePtr == NULL) 
@@ -244,13 +213,13 @@ void add_sd_test() {
     
     p -> state = RUNNABLE;
     p -> sz = PAGE_SIZE;
-    p -> context -> r30 = (u64)to_initret;
+    p -> context -> r30 = (u64)to_sdtest;
 
     release_spinlock(&p->lock);
 }
 
 /* Initialize new user program to test SD driver */
-void sd_init_idle() {
+void add_sd_loop() {
     struct proc *p;
     extern char sdloop_start[], sdloop_end[];
     u64 cpsize = (u64)(sdloop_end - sdloop_start), tmpsize;
@@ -258,28 +227,23 @@ void sd_init_idle() {
     p = alloc_proc();
     
     acquire_spinlock(&p->lock);
-
     if (p == NULL) 
         PANIC("Could not allocate init process");
     if ((p->pgdir = pgdir_init()) == NULL)
         PANIC("Could not initialize root pagetable");
-    printf("\n[add_sd_loop] (pid = %d)\n", p->pid);
-
+    printf("\n[add_sd_loop] p : %p\n", p);
     for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
-
         PagePtr = kalloc();
         if (PagePtr == NULL) 
             PANIC("kalloc failed");
         tmpsize = (cpsize-vplace > PAGE_SIZE)? PAGE_SIZE : (cpsize-vplace);
         uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
         memcpy(PagePtr, sdloop_start + vplace, tmpsize);
-
     }
     
     p -> state = RUNNABLE;
     p -> sz = PAGE_SIZE;
     p -> context -> r30 = (u64)to_forkret;
-    bound_processor_pid(p->pid, 0);
 
     release_spinlock(&p->lock);
 }

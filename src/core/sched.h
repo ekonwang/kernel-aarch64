@@ -157,30 +157,4 @@ static INLINE void acquire_sched_lock() {
 static INLINE void release_sched_lock() {
     thiscpu()->scheduler->op->release_lock(thiscpu()->scheduler);
 }
-
-/* Caller must hold the lock. */
-static INLINE void bound_processor(proc *p, u64 cpuid) {
-    p->bounding = (u64)0;
-    asserts(cpuid < NCPU, "bounding a processor exceeding limit [%d]", cpuid);
-    p->bounding |= (1 << cpuid);
-    printf("\n[Bounding] process (pid = %d) bound to CPU #%d\n", p->pid, cpuid);
-}
-
-static INLINE void bound_processor_pid(u64 pid, u64 cpuid) {
-    proc *p;
-    struct scheduler *scheduler = thiscpu()->scheduler;
-    for (int i = 0; i < NPROC; i++) {
-        p = (proc *)&scheduler->ptable.proc[i];
-        if (!holding_spinlock(&p->lock)) {
-            acquire_spinlock(&p->lock);
-            if (p->pid == pid) {
-                bound_processor(p, cpuid);
-            }
-            release_spinlock(&p->lock);
-        }
-        else if (p->pid == pid) {
-            bound_processor(p, cpuid);
-        }
-    }
-}
 #endif

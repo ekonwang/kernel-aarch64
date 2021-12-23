@@ -64,12 +64,11 @@ NORETURN void main() {
     init_system_per_cpu();
 
     if (cpuid() == 0) {
-        spawn_init_process();
+        // spawn_init_process();
         // add_loop_test(1);
         // container_test_init();
-        sd_init_idle();
-        // add_sd_test();
-        bound_processor_pid(1, 0);
+        add_sd_loop();
+        add_sd_test();
         enter_scheduler();
     } else {
         enter_scheduler();
