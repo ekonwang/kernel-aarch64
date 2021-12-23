@@ -59,7 +59,6 @@ void init_bcache(const SuperBlock *_sblock, const BlockDevice *_device) {
     _cache_debug = false;
     cached_num = 0;
     end_pending = 0;
-    // printf("\nlock addr -> %p\n", &lock);
 
     // if neccessary, recover from crash.
     unsafe_crash_recover(true);
@@ -106,7 +105,6 @@ static Block *unsafe_cache_acquire(usize block_no, bool _safe) {
         }
         if (blk != NULL) break;
     }
-    acquire_sleeplock(&(blk->lock));
     blk->acquired = true;
 
     if (_cache_debug) 
@@ -115,6 +113,7 @@ static Block *unsafe_cache_acquire(usize block_no, bool _safe) {
         scavenger();
     if (_safe)
         release_spinlock(&lock);
+    acquire_sleeplock(&(blk->lock));
     return blk;
 }
 
