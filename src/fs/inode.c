@@ -16,16 +16,20 @@ static Arena arena;
 // find inode in list.
 // NOTED : caller MUST hold the lock of the list !!!
 static INLINE Inode *get_inode_inlist(usize inode_no) {
+    acquire_spinlock(&lock);
     ListNode *head_pointer = (ListNode*) &head;
     ListNode *current = head_pointer->next;
     Inode *inode = NULL;
     while(current != head_pointer) {
         inode = (Inode *) current;
-        // corresponding inode is found in list.
         if (inode->inode_no == inode_no)
+        {
+            release_spinlock(&lock);
             return inode;
+        }
         current = current->next;
     }
+    release_spinlock(&lock);
     return NULL;
 }
 
@@ -193,9 +197,7 @@ static Inode *inode_get(usize inode_no) {
 
     // try to find the inode in list first.
     Inode *inode = NULL;
-    acquire_spinlock(&lock);
     inode = get_inode_inlist(inode_no);
-    release_spinlock(&lock);
 
     // if inode has been in list.
     if (inode != NULL) {
@@ -258,38 +260,35 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
     u32 *addrs = &im_entry->addrs;
     usize i = 0;
 
-    // try to free all data blocks on entry.
-    // first try to free the direct data block.
-    for(; i<INODE_NUM_DIRECT; i++) {
-        // if there is allocated data block, free it.
-        if (addrs[i]) {
+    // First, free the direct data blocks.
+    // Second, free indirect allocated data blocks.
+    for(; i<INODE_NUM_DIRECT; i++) 
+    {
+        if (addrs[i]) 
+        {
             if (inode->valid == true)
                 cache->free(ctx, addrs[i]);
             addrs[i] = (u32)0;
         }
     }
 
-    // second try to free the indirect data block.
-    if (im_entry->indirect && inode->valid == true) {
+    if (im_entry->indirect && inode->valid == true) 
+    {
         Block *block = cache->acquire(im_entry->indirect);
-        for (i=0; i<INODE_NUM_INDIRECT; i++) {
+        for (i=0; i<INODE_NUM_INDIRECT; i++) 
+        {
             u32 *block_no_addr = (u32 *)block + i;
-
-            // if there is allocated data block in indirect block, free it.
-            if (*block_no_addr) {
+            if (*block_no_addr) 
                 cache->free(ctx, *block_no_addr);
-            }
         }
-        
-        // unlock the indirect block and free it.
+        memset(&(block->data), 0, BLOCK_SIZE);
+        cache->sync(ctx, block);
         cache->release(block);
         cache->free(ctx, im_entry->indirect);
     }
     entry->indirect = (u32)0;
     entry->num_bytes = (u16)0;
-    // now all contents has been discard.
 
-    // finally synchronize entry to sd.
     inode_sync(ctx, inode, true);
 }
 
@@ -364,41 +363,55 @@ static void inode_put(OpContext *ctx, Inode *inode) {
 // 4. if correspongding block is not allocated, allocate it.
 // 
 static usize inode_map(OpContext *ctx, Inode *inode, usize offset, bool *modified) {
-    InodeEntry *entry = &inode->entry;
     assert(offset < INODE_MAX_BYTES);
-    usize block_index = offset / BLOCK_SIZE, block_no = 0;
-    u32 *block_entry = NULL;
 
-    // if block_index is at direct area.
-    if (block_index < INODE_NUM_DIRECT) {
-        block_entry = &entry->addrs[block_index];
+    InodeEntry *entry = &inode->entry;
+    usize block_index = offset / BLOCK_SIZE;
+    usize block_no = 0;
+    u32 *entry_ptr = NULL;
+
+    if (block_index < INODE_NUM_DIRECT) 
+    {
+        // When block at direct area, check if corresponding block allocated.
+        // IF NOT, allocate a new one.
+        entry_ptr = &entry->addrs[block_index];
+        if (*entry_ptr == 0)
+            *entry_ptr = cache->alloc(ctx);
+        *modified = true;
+        block_no = *entry_ptr;
     }
 
-    // else if block_index is at indirect area.
-    else {
+    else 
+    {
+        // Else if block_index is at indirect area.
+        // Also, check if corresponding block allocated.
+        // One important issue is initialiaze the indirect block to zero block.
+        Block *blk = NULL;
         block_index -= INODE_NUM_DIRECT;
 
-        // if indirect entry is not used, initialize indirect block.
-        if (entry->indirect==0) {
+        if (entry->indirect==0) 
+        {
             entry->indirect = cache->alloc(ctx);
             *modified = true;
+            blk = cache->acquire(entry->indirect);
+            memset(&(blk->data), 0, BLOCK_SIZE);
         }
 
-        // find corresponding entry position.
-        IndirectBlock *block = (IndirectBlock *)cache->acquire(entry->indirect);
-        block_entry = &block->addrs[block_index];
-        cache->release(block);
-    }
+        if (blk == NULL)
+            blk = cache->acquire(entry->indirect);
+        IndirectBlock *block = &(blk->data);
+        entry_ptr = &block->addrs[block_index];
+        
+        if (*entry_ptr == 0)
+        {
+            *entry_ptr = cache->alloc(ctx);
+            *modified = true;
+        }
+        cache->release(blk);
+        if (*modified)
+            cache->sync(ctx, blk);
 
-    // if entry is allocated before.
-    if (*block_entry) 
-        block_no = *block_entry;
-
-    // if this entry is not allocated.
-    else {
-        *block_entry = cache->alloc(ctx);
-        block_no = *block_entry;
-        *modified = true;
+        block_no = *entry_ptr;
     }
 
     return block_no;
@@ -410,13 +423,12 @@ static usize inode_map2(Inode *inode, usize offset) {
     assert(offset < INODE_MAX_BYTES);
     usize block_index = offset / BLOCK_SIZE, block_no = 0;
     
-    // if block_index is at direct area.
+    // Find the block number of corresponding block.
     if (block_index < INODE_NUM_DIRECT) {
         assert(entry->addrs[block_index]);
         return entry->addrs[block_index];
     }
 
-    // else if block_index is at indirect area.
     else {
         block_index -= INODE_NUM_DIRECT;
         assert(entry->indirect);
@@ -443,16 +455,12 @@ static void inode_read(Inode *inode, u8 *dest, usize offset, usize count) {
     usize i = round_down(offset, BLOCK_SIZE);
     usize start, term;
     while(i < end) {
-        // i: data block_no.
-        // copydata start from start, ends at term in this block.
         start = MAX(i, offset)-i;
         term = MIN(i+BLOCK_SIZE, end)-i;
-        // begin copy.
         usize block_no = inode_map2(inode, i);
         Block *block = cache->acquire(block_no);
-        memcpy(dest, (u8 *)block + start, term-start);
+        memcpy(dest, (u8 *)&(block->data) + start, term-start);
         cache->release(block);
-        // update.
         dest += term-start;
         i += BLOCK_SIZE;
     }
@@ -487,7 +495,7 @@ static void inode_write(OpContext *ctx, Inode *inode, u8 *src, usize offset, usi
         
         // begin copying to disk.
         Block *block = cache->acquire(block_no);
-        memcpy((u8 *)block + start, src, term-start);
+        memcpy((u8 *)&(block->data) + start, src, term-start);
         cache->release(block);
 
         // update terminal and start.

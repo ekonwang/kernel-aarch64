@@ -292,6 +292,9 @@ void test_large_file() {
         n = std::min(static_cast<usize>(gen() % 10000), max_size - i);
         inodes.read(p, buf + i, i, n);
         for (usize j = 0; j < i + n; j++) {
+            if (buf[j] != copy[j])
+                printf("wrong at %d", j);
+            
             assert_eq(buf[j], copy[j]);
         }
     }
