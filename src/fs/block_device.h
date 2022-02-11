@@ -1,6 +1,8 @@
 #pragma once
 
 #include <fs/defines.h>
+#include <driver/sd.h>
+#define MBR_START 0x20800
 
 typedef struct {
     // read `BLOCK_SIZE` bytes in block at `block_no` to `buffer`.

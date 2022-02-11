@@ -77,7 +77,7 @@ _start:
     mov     x9, 0xd8
     str     x0, [x9, x1, lsl #3]
     str     x0, [x9, x2, lsl #3]
-    str     x0, [x9, x3, lsl #3]
+    str     x0, [x9, x3, lsl #3] 
 
     dsb     sy
     isb

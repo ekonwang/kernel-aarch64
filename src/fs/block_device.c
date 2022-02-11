@@ -1,5 +1,5 @@
-#include <driver/sd.h>
 #include <fs/block_device.h>
+#include <driver/sd.h>
 
 static void sd_read(usize block_no, u8 *buffer) {
     struct buf b;
@@ -22,7 +22,7 @@ BlockDevice block_device;
 
 void init_block_device() {
     sd_init();
-    sd_read(1, sblock_data);
+    sd_read(MBR_START, sblock_data);
 
     block_device.read = sd_read;
     block_device.write = sd_write;

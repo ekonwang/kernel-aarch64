@@ -97,6 +97,7 @@ int in_user(void *s, usize n) {
         return 1;
     return 0;
 }
+#include <core/syscallno.h>
 
 /*
  * Fetch the nul-terminated string at addr from the current process.

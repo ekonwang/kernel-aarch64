@@ -439,7 +439,6 @@ void test_alloc_free() {
         for (usize i = 0; i < num_data_blocks; i += 2) {
             usize no = bno[i];
             assert_ne(no, 0);
-
             OpContext ctx;
             bcache.begin_op(&ctx);
             bcache.free(&ctx, no);

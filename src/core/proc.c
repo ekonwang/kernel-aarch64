@@ -1,4 +1,4 @@
-
+#include <core/proc.h>
 #include <aarch64/mmu.h>
 #include <common/string.h>
 #include <core/console.h>
@@ -6,55 +6,86 @@
 #include <core/proc.h>
 #include <core/sched.h>
 #include <core/virtual_memory.h>
-#include <driver/sd.h>
-#include <fs/file.h>
-#include <fs/fs.h>
-#include <fs/inode.h>
+#include <core/container.h>
 
-void forkret();
+extern void to_forkret();
+extern void to_sdtest();
 extern void trap_return();
 /*
  * Look through the process table for an UNUSED proc.
  * If found, change state to EMBRYO and initialize
  * state (allocate stack, clear trapframe, set context for switch...)
  * required to run in the kernel. Otherwise return 0.
- * Step 1 (TODO): Call `alloc_pcb()` to get a pcb.
- * Step 2 (TODO): Set the state to `EMBRYO`.
- * Step 3 (TODO): Allocate memory for the kernel stack of the process.
- * Step 4 (TODO): Reserve regions for trapframe and context in the kernel stack.
- * Step 5 (TODO): Set p->tf and p->context to the start of these regions.
- * Step 6 (TODO): Clear trapframe.
- * Step 7 (TODO): Set the context to work with `swtch()`, `forkret()` and `trap_return()`.
+ * Step 1 (): Call `alloc_pcb()` to get a pcb.
+ * Step 2 (): Set the state to `EMBRYO`.
+ * Step 3 (): Allocate memory for the kernel stack of the process.
+ * Step 4 (): Reserve regions for trapframe and context in the kernel stack.
+ * Step 5 (): Set p->tf and p->context to the start of these regions.
+ * Step 6 (): Clear trapframe.
+ * Step 7 (): Set the context to work with `swtch()`, `forkret()` and `trap_return()`.
  */
 static struct proc *alloc_proc() {
     struct proc *p;
-    /* TODO: Lab3 Process */
+    p = alloc_pcb();
+    char* stack = kalloc();
+
+    acquire_spinlock(&p->lock);
+    p -> kstack = stack;
+    stack += KSTACKSIZE;
+    stack -= sizeof(*(p->tf));
+    memset(stack, 0, sizeof(*(p->tf)));
+    p -> tf = (Trapframe *)stack;
+    stack -= sizeof(*(p->context));
+    memset(stack, 0, sizeof(*(p->context)));
+    p -> context = (struct context *)stack;
+    release_spinlock(&p->lock);
+
+    return p;
 }
 
 /*
  * Set up first user process(Only used once).
  * Step 1: Allocate a configured proc struct by `alloc_proc()`.
- * Step 2 (TODO): Allocate memory for storing the code of init process.
- * Step 3 (TODO): Copy the code (ranging icode to eicode) to memory.
- * Step 4 (TODO): Map any va to this page.
- * Step 5 (TODO): Set the address after eret to this va.
- * Step 6 (TODO): Set proc->sz.
+ * Step 2 (): Allocate memory for storing the code of init process.
+ * Step 3 (): Copy the code (ranging icode to eicode) to memory.
+ * Step 4 (): Map any va to this page.
+ * Step 5 (): Set the address after eret to this va.
+ * Step 6 (): Set proc->sz.
  */
 void spawn_init_process() {
     struct proc *p;
     extern char icode[], eicode[];
+    u64 cpsize = (u64)(eicode - icode), tmpsize;
+    PTEntriesPtr PagePtr;
     p = alloc_proc();
+    
+    acquire_spinlock(&p->lock);
+    if (p == NULL) 
+        PANIC("Could not allocate init process");
+    if ((p->pgdir = pgdir_init()) == NULL)
+        PANIC("Could not initialize root pagetable");
+    printf("[spawn_init_process] Root page table of process p : %p\n", p->pgdir);
+    for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
+        PagePtr = kalloc();
+        if (PagePtr == NULL) 
+            PANIC("kalloc failed");
+        tmpsize = (cpsize-vplace > PAGE_SIZE)? PAGE_SIZE : (cpsize-vplace);
+        uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
+        memcpy(PagePtr, icode + vplace, tmpsize);
+    }
+    
+    p -> state = RUNNABLE;
+    p -> sz = PAGE_SIZE;
+    p -> context -> r30 = (u64)to_forkret;
 
-    /* TODO: Lab3 Process */
+    release_spinlock(&p->lock);
 }
 
 /*
  * A fork child will first swtch here, and then "return" to user space.
  */
 void forkret() {
-    /* TODO: Lab3 Process */
-
-    release_sched_lock();
+	/* : Lab3 Process */
 }
 
 /*
@@ -70,10 +101,13 @@ void forkret() {
  * 
  * Why not set the state to UNUSED in this function?
  */
-NO_RETURN void exit() {
-    struct proc *p = thiscpu()->proc;
-    /* TODO: Lab3 Process */
-	/* TODO: Lab9 Shell */
+void exit() {
+    /* : Lab3 Process */
+    proc * p = thiscpu() -> proc;
+    p -> state = ZOMBIE;
+    printf("process (pid = %d) at exit.\n", p->pid);
+    sched();
+    PANIC("ERROR: ZOMBIE trying exit.");
 }
 
 /*
@@ -81,7 +115,11 @@ NO_RETURN void exit() {
  * Switch to the scheduler of this proc.
  */
 void yield() {
-    /* TODO: lab6 container */
+    struct cpu *c = thiscpu();
+    proc *p = c->proc;
+    p->state = RUNNABLE;
+    // printf("\n[yield] p : %p\n", p);
+    sched();
 }
 
 /*
@@ -89,22 +127,101 @@ void yield() {
  * Reacquires lock when awakened.
  */
 void sleep(void *chan, SpinLock *lock) {
-    /* TODO: lab6 container */
+    proc *p = thiscpu() -> proc;
+    p -> state = SLEEPING;
+    p -> chan = chan;
+    // printf("\n[sleep] process(pid = %d)[%p]\n", p->pid, p);
+    if (lock) {
+        acquire_spinlock(lock);
+    }
+    sched();
+    // printf("\n[sleep] chan[%p] process(pid = %d)[%p] wake up.\n", chan, p->pid, p);
+}
+
+static void rec_wakeup(void *chan, struct scheduler *this) {
+    for (int i = 0; i < NPROC; i++) 
+    {
+        proc *p = &this->ptable.proc[i];
+        if (p->state == SLEEPING && p->chan == chan) 
+        {
+            p->state = RUNNABLE;
+        }
+        if (p->is_scheduler) 
+        {
+            rec_wakeup(chan, &((container *)(p->cont))->scheduler);
+        }
+    }
 }
 
 /* Wake up all processes sleeping on chan. */
 void wakeup(void *chan) {
-    /* TODO: lab6 container */
+    // printf("\n[wake] chan:[%p]\n", chan);
+    struct cpu *c = thiscpu();
+    rec_wakeup(chan, &root_container->scheduler);
 }
 
-/*
+/* 
  * Add process at thiscpu()->container,
  * execute code in src/user/loop.S
  */
 void add_loop_test(int times) {
     for (int i = 0; i < times; i++) {
-        /* TODO: lab6 container */
+        struct proc *p;
+        extern char loop_start[], loop_end[];
+        u64 cpsize = loop_end - loop_start, tmpsize;
+        PTEntriesPtr PagePtr;
+        p = alloc_proc();
+
+        acquire_spinlock(&p->lock);
+        if (p == NULL) 
+            PANIC("Could not allocate init process");
+        if ((p->pgdir = pgdir_init()) == NULL)
+            PANIC("Could not initialize root pagetable");
+        for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
+            PagePtr = kalloc();
+            if (PagePtr == NULL) 
+                PANIC("kalloc failed");
+            tmpsize = (cpsize-vplace > PAGE_SIZE)? PAGE_SIZE : (cpsize-vplace);
+            uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
+            memcpy(PagePtr, loop_start + vplace, tmpsize);
+        }
+
+        p -> state = RUNNABLE;
+        p -> sz = PAGE_SIZE;
+        p -> context -> r30 = (u64)to_forkret;
+
+        release_spinlock(&p->lock);
     }
+}
+
+/* Initialize new user program to test SD driver */
+void add_sd_test() {
+    struct proc *p;
+    extern char sdtest_start[], sdtest_end[];
+    u64 cpsize = (u64)(sdtest_end - sdtest_start), tmpsize;
+    PTEntriesPtr PagePtr;
+    p = alloc_proc();
+    
+    acquire_spinlock(&p->lock);
+    if (p == NULL) 
+        PANIC("Could not allocate init process");
+    if ((p->pgdir = pgdir_init()) == NULL)
+        PANIC("Could not initialize root pagetable");
+    printf("\n[add_sd_test] p : %p\n", p);
+    for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
+        PagePtr = kalloc();
+        if (PagePtr == NULL) 
+            PANIC("kalloc failed");
+        tmpsize = (cpsize-vplace > PAGE_SIZE)? PAGE_SIZE : (cpsize-vplace);
+        uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
+        memcpy(PagePtr, sdtest_start + vplace, tmpsize);
+    }
+    
+    p -> state = RUNNABLE;
+    p -> sz = PAGE_SIZE;
+    p -> context -> r30 = (u64)to_sdtest;
+
+    release_spinlock(&p->lock);
 }
 
 /*
@@ -140,4 +257,33 @@ int wait() {
     /* TODO: Lab9 shell. */
 
     return 0;
+}
+/* Initialize new user program to test SD driver */
+void add_sd_loop() {
+    struct proc *p;
+    extern char sdloop_start[], sdloop_end[];
+    u64 cpsize = (u64)(sdloop_end - sdloop_start), tmpsize;
+    PTEntriesPtr PagePtr;
+    p = alloc_proc();
+    
+    acquire_spinlock(&p->lock);
+    if (p == NULL) 
+        PANIC("Could not allocate init process");
+    if ((p->pgdir = pgdir_init()) == NULL)
+        PANIC("Could not initialize root pagetable");
+    printf("\n[add_sd_loop] p : %p\n", p);
+    for(u64 vplace = 0; vplace < cpsize; vplace += PAGE_SIZE) {
+        PagePtr = kalloc();
+        if (PagePtr == NULL) 
+            PANIC("kalloc failed");
+        tmpsize = (cpsize-vplace > PAGE_SIZE)? PAGE_SIZE : (cpsize-vplace);
+        uvm_map(p->pgdir, vplace, tmpsize, K2P(PagePtr));
+        memcpy(PagePtr, sdloop_start + vplace, tmpsize);
+    }
+    
+    p -> state = RUNNABLE;
+    p -> sz = PAGE_SIZE;
+    p -> context -> r30 = (u64)to_forkret;
+
+    release_spinlock(&p->lock);
 }

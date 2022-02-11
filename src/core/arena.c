@@ -6,7 +6,7 @@ void init_arena(Arena *arena, usize object_size, ArenaPageAllocator allocator) {
     asserts(object_size >= ARENA_MIN_OBJECT_SIZE, "object_size = %zu is too small", object_size);
     asserts(object_size <= ARENA_PAGE_CAPACITY, "object_size = %zu is too large", object_size);
 
-    init_spinlock(&arena->lock, "arena");
+    init_spinlock(&arena->lock, "Arena");
     arena->allocator = allocator;
 
     arena->object_size = object_size;
@@ -16,6 +16,7 @@ void init_arena(Arena *arena, usize object_size, ArenaPageAllocator allocator) {
     arena->num_objects = 0;
     arena->num_pages = 0;
 }
+
 
 void clear_arena(Arena *arena) {
     acquire_spinlock(&arena->lock);

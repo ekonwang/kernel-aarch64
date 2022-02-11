@@ -93,7 +93,6 @@ void test_touch() {
         mock.end_op(ctx);
         assert_eq(mock.count_inodes(), i);
     }
-
     usize n = mock.num_inodes - 1;
     for (usize i = 2; i < mock.num_inodes; i += 2, n--) {
         mock.begin_op(ctx);
@@ -101,7 +100,6 @@ void test_touch() {
         assert_ne(inodes.lookup(p, std::to_string(i).data(), &index), 0);
         assert_ne(index, 10086);
         inodes.remove(ctx, p, index);
-
         auto *q = inodes.get(i);
         inodes.lock(q);
         q->entry.num_links = 0;
@@ -271,7 +269,6 @@ void test_large_file() {
     mock.end_op(ctx);
     assert_eq(mock.count_inodes(), 2);
     assert_eq(mock.count_blocks(), 0);
-
     for (usize i = 0; i < max_size; i++) {
         copy[i] = buf[i] = gen() & 0xff;
     }
@@ -288,12 +285,13 @@ void test_large_file() {
     for (usize i = 0; i < max_size; i++) {
         buf[i] = 0;
     }
-
     inodes.lock(p);
     for (usize i = 0, n = 0; i < max_size; i += n) {
         n = std::min(static_cast<usize>(gen() % 10000), max_size - i);
         inodes.read(p, buf + i, i, n);
         for (usize j = 0; j < i + n; j++) {
+            if (buf[j] != copy[j])
+            
             assert_eq(buf[j], copy[j]);
         }
     }
