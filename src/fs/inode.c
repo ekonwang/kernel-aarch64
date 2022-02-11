@@ -103,8 +103,6 @@ static usize inode_alloc(OpContext *ctx, InodeType type) {
     
     for(;; i += INODE_PER_BLOCK) {
         if (i >= sblock->num_inodes) break;
-        
-        // find the right block.
         block_number = to_block_no(i);
         
         Block * block = cache->acquire(block_number);
@@ -254,7 +252,6 @@ static Inode *inode_get(usize inode_no) {
 // 
 static void inode_clear(OpContext *ctx, Inode *inode) {
     InodeEntry *entry = &inode->entry;
-
     // initialization.
     InodeEntry *im_entry = &inode->entry;
     u32 *addrs = &im_entry->addrs;
@@ -274,21 +271,20 @@ static void inode_clear(OpContext *ctx, Inode *inode) {
 
     if (im_entry->indirect && inode->valid == true) 
     {
-        Block *block = cache->acquire(im_entry->indirect);
+        Block *blk = cache->acquire(im_entry->indirect);
+        IndirectBlock *data = (IndirectBlock *)blk->data;
         for (i=0; i<INODE_NUM_INDIRECT; i++) 
         {
-            u32 *block_no_addr = (u32 *)block + i;
-            if (*block_no_addr) 
-                cache->free(ctx, *block_no_addr);
+            if (data->addrs[i]) 
+                cache->free(ctx, data->addrs[i]);
         }
-        memset(&(block->data), 0, BLOCK_SIZE);
-        cache->sync(ctx, block);
-        cache->release(block);
+        memset(data, 0, BLOCK_SIZE);
+        cache->sync(ctx, blk);
+        cache->release(blk);
         cache->free(ctx, im_entry->indirect);
     }
     entry->indirect = (u32)0;
     entry->num_bytes = (u16)0;
-
     inode_sync(ctx, inode, true);
 }
 
@@ -399,7 +395,7 @@ static usize inode_map(OpContext *ctx, Inode *inode, usize offset, bool *modifie
 
         if (blk == NULL)
             blk = cache->acquire(entry->indirect);
-        IndirectBlock *block = &(blk->data);
+        IndirectBlock *block = (IndirectBlock *)blk->data;
         entry_ptr = &block->addrs[block_index];
         
         if (*entry_ptr == 0)
@@ -432,10 +428,11 @@ static usize inode_map2(Inode *inode, usize offset) {
     else {
         block_index -= INODE_NUM_DIRECT;
         assert(entry->indirect);
-        IndirectBlock *block = (IndirectBlock *)cache->acquire(entry->indirect);
+        Block *blk = cache->acquire(entry->indirect);
+        IndirectBlock *block = (IndirectBlock *)blk->data;
         if (block->addrs[block_index]);
         usize block_no = block->addrs[block_index];
-        cache->release(block);
+        cache->release(blk);
         return block_no;
     }
 }
@@ -459,7 +456,7 @@ static void inode_read(Inode *inode, u8 *dest, usize offset, usize count) {
         term = MIN(i+BLOCK_SIZE, end)-i;
         usize block_no = inode_map2(inode, i);
         Block *block = cache->acquire(block_no);
-        memcpy(dest, (u8 *)&(block->data) + start, term-start);
+        memcpy(dest, (u8 *)(block->data) + start, term-start);
         cache->release(block);
         dest += term-start;
         i += BLOCK_SIZE;
@@ -495,7 +492,7 @@ static void inode_write(OpContext *ctx, Inode *inode, u8 *src, usize offset, usi
         
         // begin copying to disk.
         Block *block = cache->acquire(block_no);
-        memcpy((u8 *)&(block->data) + start, src, term-start);
+        memcpy((u8 *)(block->data)+start, src, term-start);
         cache->release(block);
 
         // update terminal and start.
@@ -525,7 +522,6 @@ static usize inode_lookup(Inode *inode, const char *name, usize *index) {
     assert(entry->type == INODE_DIRECTORY);
     assert(entry->num_bytes % sizeof(DirEntry) == 0);
     assert(strlen(name) < FILE_NAME_MAX_LENGTH);
-    
     // definitions of some values.
     usize len = 0;
     usize block_index = 0;
@@ -533,23 +529,18 @@ static usize inode_lookup(Inode *inode, const char *name, usize *index) {
     char buffer[BLOCK_SIZE];
 
     // begin matching.
+    // variable len : how long content need to get from this block?
     while(block_index <= entry->num_bytes) {
-        // len : how long content need to get from this block?
         len = MIN(block_index+BLOCK_SIZE, entry->num_bytes) - block_index;
         
         // call `inode_read` to access the content.
         inode_read(inode, buffer, block_index, len);
-        
-        // now the buffer has the copy of content of block.
-        // look up in the buffer :
         for (usize in_block = 0; in_block < len; in_block += sizeof(DirEntry)) {
             assert(in_block+block_index < entry->num_bytes);
             DirEntry *dir_entry = (DirEntry *)(buffer + in_block);
             char *this_name = dir_entry->name;
-
-            // '\0' position must matches. if matches.
             if (!memcmp(name, this_name, name_length+1)) {
-                
+                // '\0' position must matches. if matches.
                 // `*index` assigned with direntry index.
                 // return inode_no.
                 // noted that inode_lookup only return FIRST match.

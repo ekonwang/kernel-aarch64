@@ -269,7 +269,6 @@ void test_large_file() {
     mock.end_op(ctx);
     assert_eq(mock.count_inodes(), 2);
     assert_eq(mock.count_blocks(), 0);
-
     for (usize i = 0; i < max_size; i++) {
         copy[i] = buf[i] = gen() & 0xff;
     }
@@ -286,14 +285,12 @@ void test_large_file() {
     for (usize i = 0; i < max_size; i++) {
         buf[i] = 0;
     }
-
     inodes.lock(p);
     for (usize i = 0, n = 0; i < max_size; i += n) {
         n = std::min(static_cast<usize>(gen() % 10000), max_size - i);
         inodes.read(p, buf + i, i, n);
         for (usize j = 0; j < i + n; j++) {
             if (buf[j] != copy[j])
-                printf("wrong at %d", j);
             
             assert_eq(buf[j], copy[j]);
         }
